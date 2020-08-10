@@ -5,7 +5,9 @@ import FieldEditor from './FieldEditor'
 import { validateRecord, isValid } from '../functions/validation'
 import Helmet from 'react-helmet'
 import ValidationViewer from './ValidationViewer'
+
 import RecordEditorToolBar from './RecordEditorToolBar'
+import FieldHelpContainer from './FieldHelpContainer'
 
 const RecordEditorState = {
 	NONE: 0,
@@ -32,6 +34,8 @@ function RecordEditor(props) {
 		allowRadios: false,
 		doubleEntry: !!props['double-entry'],
 		disableExitShield: false,
+		showFinalize: false,
+		isLocked: false,
 	}
 
 	const [state, setState] = useState(initialState)
@@ -45,21 +49,25 @@ function RecordEditor(props) {
 
 			let pids = await props.db.records.toArray()
 
-			let state = {
-				state: !record ? RecordEditorState.NOTFOUND : RecordEditorState.READY,
+			let tempState = {
+				recordEditorState: !record
+					? RecordEditorState.NOTFOUND
+					: RecordEditorState.READY,
 				pids: pids.map((d) => d.pid),
+				isLocked: returnLockedValueAsBoolean(record.locked),
 			}
 
-			if (state.doubleEntry) {
-				state.referenceRecord = { ...record }
-				state.record = { uid: props.uid }
+			if (tempState.doubleEntry) {
+				tempState.referenceRecord = { ...record }
+				tempState.record = { uid: props.uid }
 				props.codebook
 					.filter((d) => d.double_enter !== 'yes')
-					.forEach((d) => (state.record[d.name] = record[d.name]))
+					.forEach((d) => (tempState.record[d.name] = record[d.name]))
 			} else {
-				state.record = record
+				tempState.record = record
 			}
-			return setState({ ...state })
+			debugger
+			return setState({ ...state, ...tempState })
 		}
 		init()
 	}, [])
@@ -200,7 +208,7 @@ function RecordEditor(props) {
 	} else if (state.recordEditorState === RecordEditorState.NONE) {
 		return <div className="content">Idle</div>
 	}
-	let locked = returnLockedValueAsBoolean(state.record.locked)
+
 	function returnLockedValueAsBoolean(tempLockedValue) {
 		if (tempLockedValue === 'TRUE') {
 			return true
@@ -255,7 +263,8 @@ function RecordEditor(props) {
 
 	// Handle leaving page with invalid record
 	let prompt =
-		!state.disableExitShield && (!valid || (state.doubleEntry && locked)) ? (
+		!state.disableExitShield &&
+		(!valid || (state.doubleEntry && state.isLocked)) ? (
 			<Prompt
 				message={(nextLocation) => {
 					if (state.doubleEntry) {
@@ -285,7 +294,9 @@ function RecordEditor(props) {
 				<FieldEditor
 					key={d.name}
 					data={d}
-					disabled={locked || (state.doubleEntry && d.double_enter !== 'yes')}
+					disabled={
+						state.isLocked || (state.doubleEntry && d.double_enter !== 'yes')
+					}
 					record={state.record}
 					allowRadios={state.allowRadios}
 					validation={validation[d.name]}
@@ -330,50 +341,7 @@ function RecordEditor(props) {
 		)
 	})
 
-	let showFinalize =
-		valid && state.record.cr === '1' && !state.doubleEntry && locked !== true
-	let fieldHelp = !state.focusedField ? (
-		<div className="field_help"></div>
-	) : (
-		<div
-			className={
-				'field_help visible' +
-				(showFinalize || state.doubleEntry ? ' valid-record' : '')
-			}
-		>
-			<div className="label">{state.focusedField.props.data.label}</div>
-			<div className="errors">
-				{validation[state.focusedField.props.data.name].errors.map((d, i) => (
-					<div className="error" key={i}>
-						{d}
-					</div>
-				))}
-			</div>
-			<div className="warnings">
-				{validation[state.focusedField.props.data.name].warnings.map((d, i) => (
-					<div className="warning" key={i}>
-						{d}
-					</div>
-				))}
-			</div>
-			<div className="description">
-				{state.focusedField.props.data.description}
-				{state.focusedField.props.data.show_valid_values === 'yes' ? (
-					<div className="valid_values">
-						{formatValid(state.focusedField.props.data)}
-					</div>
-				) : null}
-			</div>
-			<div
-				className="coding_description"
-				dangerouslySetInnerHTML={{
-					__html: state.focusedField.props.data.coding_instructions,
-				}}
-			/>
-		</div>
-	)
-
-	let finalizeEntry = showFinalize ? (
+	let finalizeEntry = state.showFinalize ? (
 		<div className="finalize-entry">
 			<Link to={'/complete/' + state.record.uid}>
 				<button className="button is-primary is-rounded">
@@ -384,7 +352,7 @@ function RecordEditor(props) {
 	) : null
 
 	let checkEntry =
-		state.doubleEntry && locked !== true ? (
+		state.doubleEntry && state.isLocked !== true ? (
 			<div className="finalize-entry">
 				<button
 					className="button is-primary is-rounded"
@@ -408,7 +376,7 @@ function RecordEditor(props) {
 	let titleText = state.doubleEntry
 		? `Double enter ${idField.label}: ${id}`
 		: `Editing ${idField.label}: ${id}`
-	if (locked)
+	if (state.isLocked)
 		titleText = (
 			<span>
 				<span className="fa fa-lock" /> Viewing locked {idField.label}: {id}
@@ -421,23 +389,31 @@ function RecordEditor(props) {
 				<title>{`${props.config.name} - ${titleText}`}</title>
 			</Helmet>
 
-			<div className="">
+			<div>
 				{prompt}
 				<h1>{titleText}</h1>
-
 				<RecordEditorToolBar
 					saveAndExit={saveAndExit}
 					markFieldsUnknown={markFieldsUnknown}
 					exitWithoutSaving={exitWithoutSaving}
 					unlockRecord={unlockRecord}
 					changeRadios={changeRadios}
-					locked={locked}
+					locked={state.isLocked}
 					doubleEntry={state.doubleEntry}
 					allowRadios={props.allowRadios}
 				/>
 
 				<div className="record_fields">{fieldGroups}</div>
-				{fieldHelp}
+				<FieldHelpContainer
+					locked={state.isLocked}
+					doubleEntry={state.doubleEntry}
+					focusedField={state.focusedField}
+					record={state.record}
+					validation={validation}
+					valid={valid}
+					showFinalize={state.showFinalize}
+					formatValid={formatValid}
+				/>
 				{finalizeEntry}
 				{checkEntry}
 			</div>
