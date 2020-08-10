@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useHistory, Prompt, Link, withRouter } from 'react-router-dom'
-import _ from 'lodash'
-import FieldEditor from './FieldEditor'
 import { validateRecord, isValid } from '../functions/validation'
 import Helmet from 'react-helmet'
 import ValidationViewer from './ValidationViewer'
 
 import RecordEditorToolBar from './RecordEditorToolBar'
 import FieldHelpContainer from './FieldHelpContainer'
+import FieldGroupsContainer from './FieldGroupsContainer'
 
 const RecordEditorState = {
 	NONE: 0,
@@ -39,6 +38,7 @@ function RecordEditor(props) {
 	}
 
 	const [state, setState] = useState(initialState)
+	let history = useHistory() //access react routers history object via hooks
 
 	useEffect(() => {
 		let init = async () => {
@@ -78,7 +78,7 @@ function RecordEditor(props) {
 	}
 
 	// Persists changes to databases
-	async function onChange(field, value) {
+	async function handleFieldChange(field, value) {
 		let record = { ...state.record }
 		record[field.name] = value
 		setState({ ...state, record: record })
@@ -112,8 +112,6 @@ function RecordEditor(props) {
 		})
 	}
 
-	let history = useHistory() //access react routers history object via hooks
-
 	function saveAndExit() {
 		setState({ ...state, disableExitShield: true })
 		history.push('/')
@@ -132,7 +130,7 @@ function RecordEditor(props) {
 				(record[c.name] === undefined || record[c.name] === '')
 			) {
 				record[c.name] = c.unknown
-				onChange(c, c.unknown)
+				handleFieldChange(c, c.unknown)
 			}
 		}
 
@@ -200,10 +198,15 @@ function RecordEditor(props) {
 
 	// Handle loading and errors
 	if (state.recordEditorState === RecordEditorState.LOADING) {
-		return <div className="content">Loading...</div>
+		return (
+			<progress className="progress is-small is-primary" max="100"></progress>
+		)
 	} else if (state.recordEditorState === RecordEditorState.NOTFOUND) {
 		return (
-			<div className="content">Couldn't find record with id: {props.uid}</div>
+			<div className="notification is-warning">
+				<button className="delete" onClick={() => history.push('/')}></button>
+				Couldn't find record with id: {props.uid}
+			</div>
 		)
 	} else if (state.recordEditorState === RecordEditorState.NONE) {
 		return <div className="content">Idle</div>
@@ -274,73 +277,6 @@ function RecordEditor(props) {
 			></Prompt>
 		) : null
 
-	// Group fields using 'group1'
-	let groups = _.groupBy(
-		props.codebook.filter((d) => d.visible === 'yes'),
-		'group1'
-	)
-
-	// Create field groups
-	let fieldGroups = Object.keys(groups).map((k) => {
-		let i = 0
-		// Group fields in group using 'group2'
-		// This level is to group things like connected Dates and Times, or Free Text and ICD-10 codes
-		let fieldGroups = _.groupBy(groups[k], (d) =>
-			d.group2 === '' ? '_' + ++i : d.group2
-		) // HACK: Create unique id(_#) for fields with empty group2 so they are not all grouped together
-		let fieldGroupElements = Object.keys(fieldGroups).map((d) => {
-			let label = d[0] === '_' ? null : <div className="label">{d}</div>
-			let fields = fieldGroups[d].map((d) => (
-				<FieldEditor
-					key={d.name}
-					data={d}
-					disabled={
-						state.isLocked || (state.doubleEntry && d.double_enter !== 'yes')
-					}
-					record={state.record}
-					allowRadios={state.allowRadios}
-					validation={validation[d.name]}
-					unlabeled={d.group2 !== ''}
-					onChange={(f, v) => onChange(f, v)}
-					onFocus={(fe) => onFocusFieldEditor(fe)}
-					onBlur={(fe) => onBlurFieldEditor(fe)}
-				/>
-			))
-
-			let isFocused =
-				state.focusedField != null &&
-				fieldGroups[d].find(
-					(d) => d.name === state.focusedField.props.data.name
-				) != null
-
-			return (
-				<div
-					className={[
-						'field_group',
-						isFocused ? 'focused' : null,
-						validateFieldGroup(fieldGroups[d], validation),
-					]
-						.filter(Boolean)
-						.join(' ')}
-					key={d}
-					onClick={() => {
-						validateFieldGroup(fieldGroups[d], validation)
-					}}
-				>
-					{label}
-					{fields}
-				</div>
-			)
-		})
-
-		return (
-			<div className="record_group" key={k}>
-				<h2>{k}</h2>
-				<div className="fields">{fieldGroupElements}</div>
-			</div>
-		)
-	})
-
 	let finalizeEntry = state.showFinalize ? (
 		<div className="finalize-entry">
 			<Link to={'/complete/' + state.record.uid}>
@@ -403,7 +339,19 @@ function RecordEditor(props) {
 					allowRadios={props.allowRadios}
 				/>
 
-				<div className="record_fields">{fieldGroups}</div>
+				<FieldGroupsContainer
+					codebook={props.codebook}
+					allowRadios={state.allowRadios}
+					validation={validation}
+					record={state.record}
+					isLocked={state.isLocked}
+					doubleEntry={state.doubleEntry}
+					focusedField={state.focusedField}
+					handleFieldChange={handleFieldChange}
+					onFocusFieldEditor={onFocusFieldEditor}
+					onBlurFieldEditor={onBlurFieldEditor}
+					validateFieldGroup={validateFieldGroup}
+				/>
 				<FieldHelpContainer
 					locked={state.isLocked}
 					doubleEntry={state.doubleEntry}
