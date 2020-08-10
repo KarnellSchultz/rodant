@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Prompt, Link, withRouter } from 'react-router-dom'
+import { useHistory, Prompt, Link, withRouter } from 'react-router-dom'
 import _ from 'lodash'
 import FieldEditor from './FieldEditor'
 import { validateRecord, isValid } from '../functions/validation'
 import Helmet from 'react-helmet'
 import ValidationViewer from './ValidationViewer'
+import RecordEditorToolBar from './RecordEditorToolBar'
 
 const RecordEditorState = {
 	NONE: 0,
@@ -23,7 +24,7 @@ function RecordEditor(props) {
 	for (let i = 0; i < props.codebook.length; i++)
 		cbo[props.codebook[i].name] = props.codebook[i]
 
-	console.log(cbo)
+	// console.log(cbo)
 
 	const initialState = {
 		recordEditorState: RecordEditorState.LOADING,
@@ -34,7 +35,6 @@ function RecordEditor(props) {
 	}
 
 	const [state, setState] = useState(initialState)
-	const [isLoading, setIsLoading] = useState(RecordEditorState.LOADING)
 
 	useEffect(() => {
 		let init = async () => {
@@ -44,8 +44,6 @@ function RecordEditor(props) {
 				.first()
 
 			let pids = await props.db.records.toArray()
-
-			debugger
 
 			let state = {
 				state: !record ? RecordEditorState.NOTFOUND : RecordEditorState.READY,
@@ -58,8 +56,6 @@ function RecordEditor(props) {
 				props.codebook
 					.filter((d) => d.double_enter !== 'yes')
 					.forEach((d) => (state.record[d.name] = record[d.name]))
-
-				console.log(state.record)
 			} else {
 				state.record = record
 			}
@@ -70,7 +66,6 @@ function RecordEditor(props) {
 
 	async function updatePIDs() {
 		let pids = await props.db.records.toArray()
-
 		setState({ ...state, pids: pids.map((d) => d[props.config.id_field]) })
 	}
 
@@ -102,27 +97,23 @@ function RecordEditor(props) {
 
 	function onBlurFieldEditor(fe) {
 		setState({
+			...state,
 			state: state.recordEditorState,
 			record: state.record,
 			focusedField: null,
 		})
 	}
 
+	let history = useHistory() //access react routers history object via hooks
+
 	function saveAndExit() {
-		setState({ disableExitShield: true }, () => {
-			props.history.push('/')
-		})
+		setState({ ...state, disableExitShield: true })
+		history.push('/')
 	}
 
 	function exitWithoutSaving() {
-		setState(
-			{
-				disableExitShield: true,
-			},
-			() => {
-				props.history.push('/')
-			}
-		)
+		setState({ ...state, disableExitShield: true })
+		history.push('/')
 	}
 
 	function markFieldsUnknown() {
@@ -173,9 +164,9 @@ function RecordEditor(props) {
 		return 'valid'
 	}
 
-	async function discard(db, uid) {
-		db.records.where('uid').equals(uid).delete()
-	}
+	// async function discard(db, uid) {
+	// 	db.records.where('uid').equals(uid).delete()
+	// }
 
 	function checkDoubleEntry() {
 		let errors = props.codebook
@@ -196,8 +187,7 @@ function RecordEditor(props) {
 		await props.db.records.where('uid').equals(Number(props.uid)).modify({
 			locked: true,
 		})
-
-		props.history.push('/')
+		history.push('/')
 	}
 
 	// Handle loading and errors
@@ -210,7 +200,6 @@ function RecordEditor(props) {
 	} else if (state.recordEditorState === RecordEditorState.NONE) {
 		return <div className="content">Idle</div>
 	}
-
 	let locked = returnLockedValueAsBoolean(state.record.locked)
 	function returnLockedValueAsBoolean(tempLockedValue) {
 		if (tempLockedValue === 'TRUE') {
@@ -435,59 +424,17 @@ function RecordEditor(props) {
 			<div className="">
 				{prompt}
 				<h1>{titleText}</h1>
-				<div className="toolbar">
-					{!locked && (!state.doubleEntry || true) && (
-						<button
-							className="button is-rounded save-and-exit"
-							onClick={() => {
-								saveAndExit()
-							}}
-						>
-							Close record
-						</button>
-					)}
-					{!locked && (!state.doubleEntry || true) && (
-						<button
-							className="button is-rounded mark-unknown"
-							onClick={() => {
-								markFieldsUnknown()
-							}}
-						>
-							Mark empty fields as Not Known
-						</button>
-					)}
 
-					{locked && (
-						<>
-							<button
-								className="button is-rounded mark-unknown"
-								onClick={() => {
-									exitWithoutSaving()
-								}}
-							>
-								Return
-							</button>
-							<button
-								className="button is-rounded mark-unknown"
-								onClick={() => {
-									unlockRecord()
-								}}
-							>
-								Unlock
-							</button>
-						</>
-					)}
-					<div className="control">
-						<label className="checkbox">
-							<input
-								type="checkbox"
-								value={props.allowRadios}
-								onChange={(e) => changeRadios(e)}
-							/>{' '}
-							[debug] Enable radio buttons
-						</label>
-					</div>
-				</div>
+				<RecordEditorToolBar
+					saveAndExit={saveAndExit}
+					markFieldsUnknown={markFieldsUnknown}
+					exitWithoutSaving={exitWithoutSaving}
+					unlockRecord={unlockRecord}
+					changeRadios={changeRadios}
+					locked={locked}
+					doubleEntry={state.doubleEntry}
+					allowRadios={props.allowRadios}
+				/>
 
 				<div className="record_fields">{fieldGroups}</div>
 				{fieldHelp}
