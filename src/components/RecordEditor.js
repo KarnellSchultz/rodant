@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Prompt, Link, withRouter } from 'react-router-dom'
 import _ from 'lodash'
 import FieldEditor from './FieldEditor'
@@ -18,164 +18,147 @@ const RecordEditorState = {
  * Listens for changes through the FieldEditor's onChange prop
  * and persists all changes directly to database.
  */
-class RecordEditor extends React.Component {
-	constructor(props) {
-		super(props)
+function RecordEditor(props) {
+	let cbo = {}
+	for (let i = 0; i < props.codebook.length; i++)
+		cbo[props.codebook[i].name] = props.codebook[i]
 
-		let cbo = {}
-		for (let i = 0; i < props.codebook.length; i++)
-			cbo[props.codebook[i].name] = props.codebook[i]
+	console.log(cbo)
 
-		console.log(cbo)
-
-		this.state = {
-			state: RecordEditorState.NONE,
-			record: null,
-			allowRadios: false,
-			doubleEntry: !!props['double-entry'],
-			disableExitShield: false,
-		}
+	const initialState = {
+		recordEditorState: RecordEditorState.LOADING,
+		record: null,
+		allowRadios: false,
+		doubleEntry: !!props['double-entry'],
+		disableExitShield: false,
 	}
 
-	async componentDidMount() {
-		this.setState({
-			state: RecordEditorState.LOADING,
-			record: null,
-		})
+	const [state, setState] = useState(initialState)
+	const [isLoading, setIsLoading] = useState(RecordEditorState.LOADING)
 
-		let record = await this.props.db.records
-			.where('uid')
-			.equals(Number(this.props.uid))
-			.first()
+	useEffect(() => {
+		let init = async () => {
+			let record = await props.db.records
+				.where('uid')
+				.equals(Number(props.uid))
+				.first()
 
-		let pids = await this.props.db.records.toArray()
+			let pids = await props.db.records.toArray()
 
-		let state = {
-			state: !record ? RecordEditorState.NOTFOUND : RecordEditorState.READY,
-			pids: pids.map((d) => d.pid),
+			debugger
+
+			let state = {
+				state: !record ? RecordEditorState.NOTFOUND : RecordEditorState.READY,
+				pids: pids.map((d) => d.pid),
+			}
+
+			if (state.doubleEntry) {
+				state.referenceRecord = { ...record }
+				state.record = { uid: props.uid }
+				props.codebook
+					.filter((d) => d.double_enter !== 'yes')
+					.forEach((d) => (state.record[d.name] = record[d.name]))
+
+				console.log(state.record)
+			} else {
+				state.record = record
+			}
+			return setState({ ...state })
 		}
+		init()
+	}, [])
 
-		if (this.state.doubleEntry) {
-			state.referenceRecord = { ...record }
-			state.record = { uid: this.props.uid }
-			this.props.codebook
-				.filter((d) => d.double_enter !== 'yes')
-				.forEach((d) => (state.record[d.name] = record[d.name]))
+	async function updatePIDs() {
+		let pids = await props.db.records.toArray()
 
-			console.log(state.record)
-		} else {
-			state.record = record
-		}
-
-		this.setState(state)
-	}
-
-	async updatePIDs() {
-		let pids = await this.props.db.records.toArray()
-
-		this.setState({
-			pids: pids.map((d) => d[this.props.config.id_field]),
-		})
+		setState({ ...state, pids: pids.map((d) => d[props.config.id_field]) })
 	}
 
 	// Persists changes to databases
-	async onChange(field, value) {
-		let record = { ...this.state.record }
+	async function onChange(field, value) {
+		let record = { ...state.record }
 		record[field.name] = value
-		this.setState({
-			record: record,
-		})
+		setState({ ...state, record: record })
 
-		if (this.state.doubleEntry) return
+		if (state.doubleEntry) return
 
 		let modify = {}
 		modify[field.name] = value
 
-		await this.props.db.records
-			.where('uid')
-			.equals(Number(this.props.uid))
-			.modify(modify)
+		await props.db.records.where('uid').equals(Number(props.uid)).modify(modify)
 
 		// If the field that changed was idField, update the cached id numbers
-		if (field.name === this.props.config.id_field) await this.updatePIDs()
+		if (field.name === props.config.id_field) await updatePIDs()
 	}
 
-	onFocusFieldEditor(fe) {
-		this.setState({
-			state: this.state.state,
-			record: this.state.record,
+	function onFocusFieldEditor(fe) {
+		setState({
+			...state,
+			state: state.recordEditorState,
+			record: state.record,
 			focusedField: fe,
 		})
 	}
 
-	onBlurFieldEditor(fe) {
-		this.setState({
-			state: this.state.state,
-			record: this.state.record,
+	function onBlurFieldEditor(fe) {
+		setState({
+			state: state.recordEditorState,
+			record: state.record,
 			focusedField: null,
 		})
 	}
 
-	saveAndExit() {
-		this.setState(
+	function saveAndExit() {
+		setState({ disableExitShield: true }, () => {
+			props.history.push('/')
+		})
+	}
+
+	function exitWithoutSaving() {
+		setState(
 			{
 				disableExitShield: true,
 			},
 			() => {
-				this.props.history.push('/')
+				props.history.push('/')
 			}
 		)
 	}
 
-	exitWithoutSaving() {
-		this.setState(
-			{
-				disableExitShield: true,
-			},
-			() => {
-				this.props.history.push('/')
-			}
-		)
-	}
-
-	markFieldsUnknown() {
-		let record = { ...this.state.record }
-		for (let c of this.props.codebook) {
+	function markFieldsUnknown() {
+		let record = { ...state.record }
+		for (let c of props.codebook) {
 			if (
 				c.input === 'yes' &&
 				(record[c.name] === undefined || record[c.name] === '')
 			) {
 				record[c.name] = c.unknown
-				this.onChange(c, c.unknown)
+				onChange(c, c.unknown)
 			}
 		}
 
-		this.setState({
-			state: this.state.state,
+		setState({
+			...state,
+			state: state.recordEditorState,
 			record: record,
 			focusedField: null,
 		})
 	}
 
-	async unlockRecord() {
-		let record = { ...this.state.record }
+	async function unlockRecord() {
+		let record = { ...state.record }
 		record.locked = 'FALSE'
-		await this.props.db.records
-			.where('uid')
-			.equals(Number(this.props.uid))
-			.modify({
-				locked: false,
-			})
-
-		this.setState({
-			record: record,
+		await props.db.records.where('uid').equals(Number(props.uid)).modify({
+			locked: false,
 		})
+
+		setState({ ...state, record: record })
 	}
 
-	validateFieldGroup(group, validation) {
+	function validateFieldGroup(group, validation) {
 		if (
-			this.state.doubleEntryErrors &&
-			group.some((d) => this.state.doubleEntryErrors.indexOf(d.name) !== -1)
+			state.doubleEntryErrors &&
+			group.some((d) => state.doubleEntryErrors.indexOf(d.name) !== -1)
 		)
 			return 'double-entry-error'
 
@@ -190,360 +173,336 @@ class RecordEditor extends React.Component {
 		return 'valid'
 	}
 
-	async discard(db, uid) {
+	async function discard(db, uid) {
 		db.records.where('uid').equals(uid).delete()
 	}
 
-	checkDoubleEntry() {
-		let errors = this.props.codebook
+	function checkDoubleEntry() {
+		let errors = props.codebook
 			.filter(
 				(d) =>
 					d.double_enter === 'yes' &&
 					d.input === 'yes' &&
 					d.calculated !== 'yes' &&
-					this.state.referenceRecord[d.name] !== this.state.record[d.name]
+					state.referenceRecord[d.name] !== state.record[d.name]
 			)
 			.map((d) => d.name)
 
-		console.log(errors)
-		this.setState({
-			doubleEntryErrors: errors,
+		console.error(errors)
+		setState({ ...state, doubleEntryErrors: errors })
+	}
+
+	async function finalizeDoubleEntry() {
+		await props.db.records.where('uid').equals(Number(props.uid)).modify({
+			locked: true,
 		})
+
+		props.history.push('/')
 	}
 
-	async finalizeDoubleEntry() {
-		await this.props.db.records
-			.where('uid')
-			.equals(Number(this.props.uid))
-			.modify({
-				locked: true,
-			})
-
-		this.props.history.push('/')
+	// Handle loading and errors
+	if (state.recordEditorState === RecordEditorState.LOADING) {
+		return <div className="content">Loading...</div>
+	} else if (state.recordEditorState === RecordEditorState.NOTFOUND) {
+		return (
+			<div className="content">Couldn't find record with id: {props.uid}</div>
+		)
+	} else if (state.recordEditorState === RecordEditorState.NONE) {
+		return <div className="content">Idle</div>
 	}
 
-	render() {
-		// Handle loading and errors
-		if (this.state.state === RecordEditorState.LOADING) {
-			return <div className="content">Loading...</div>
-		} else if (this.state.state === RecordEditorState.NOTFOUND) {
-			return (
-				<div className="content">
-					Couldn't find record with id: {this.props.uid}
-				</div>
-			)
-		} else if (this.state.state === RecordEditorState.NONE) {
-			return <div className="content">Idle</div>
+	let locked = returnLockedValueAsBoolean(state.record.locked)
+	function returnLockedValueAsBoolean(tempLockedValue) {
+		if (tempLockedValue === 'TRUE') {
+			return true
+		}
+		if (tempLockedValue === 'true') {
+			return true
+		}
+		if (tempLockedValue === true) {
+			return true
 		}
 
-		let locked = returnLockedValueAsBoolean(this.state.record.locked)
-		function returnLockedValueAsBoolean(tempLockedValue) {
-			if (tempLockedValue === 'TRUE') {
-				return true
-			}
-			if (tempLockedValue === 'true') {
-				return true
-			}
-			if (tempLockedValue === true) {
-				return true
-			}
-
-			if (tempLockedValue === 'FALSE') {
-				return false
-			}
-			if (tempLockedValue === 'false') {
-				return false
-			}
-			if (tempLockedValue === false) {
-				return false
-			}
+		if (tempLockedValue === 'FALSE') {
 			return false
 		}
-
-		// Populate fields from codebook
-		let fields = {}
-		for (let field of this.props.codebook) fields[field.name] = field
-
-		// Do validation
-		let validation = validateRecord(this.state.record, this.props.codebook)
-		let valid = isValid(validation)
-
-		// Check for duplicate PIDs
-		if (
-			this.state.pids.filter(
-				(d) => parseInt(d) === parseInt(validation.pid.value)
-			).length > 1
-		) {
-			validation.pid.errors.push('Duplicate Patient study ID')
-			validation.pid.valid = false
+		if (tempLockedValue === 'false') {
+			return false
 		}
+		if (tempLockedValue === false) {
+			return false
+		}
+		return false
+	}
 
-		// Handle leaving page with invalid record
-		let prompt =
-			!this.state.disableExitShield &&
-			(!valid || (this.state.doubleEntry && locked)) ? (
-				<Prompt
-					message={(nextLocation) => {
-						if (this.state.doubleEntry) {
-							return 'You have not yet completed this Double Entry. Discard changes?'
-						}
-					}}
-				></Prompt>
-			) : null
+	function changeRadios(e) {
+		setState({ ...state, allowRadios: !state.allowRadios })
+	}
 
-		// Group fields using 'group1'
-		let groups = _.groupBy(
-			this.props.codebook.filter((d) => d.visible === 'yes'),
-			'group1'
-		)
+	function formatValid(data) {
+		if (data.type === 'quantitative') {
+			return 'Range: ' + data.valid_values.split(',').join(' .. ')
+		} else {
+			return ''
+		}
+	}
 
-		// Create field groups
-		let fieldGroups = Object.keys(groups).map((k) => {
-			let i = 0
-			// Group fields in group using 'group2'
-			// This level is to group things like connected Dates and Times, or Free Text and ICD-10 codes
-			let fieldGroups = _.groupBy(groups[k], (d) =>
-				d.group2 === '' ? '_' + ++i : d.group2
-			) // HACK: Create unique id(_#) for fields with empty group2 so they are not all grouped together
-			let fieldGroupElements = Object.keys(fieldGroups).map((d) => {
-				let label = d[0] === '_' ? null : <div className="label">{d}</div>
-				let fields = fieldGroups[d].map((d) => (
-					<FieldEditor
-						key={d.name}
-						data={d}
-						disabled={
-							locked || (this.state.doubleEntry && d.double_enter !== 'yes')
-						}
-						record={this.state.record}
-						allowRadios={this.state.allowRadios}
-						validation={validation[d.name]}
-						unlabeled={d.group2 !== ''}
-						onChange={(f, v) => this.onChange(f, v)}
-						onFocus={(fe) => this.onFocusFieldEditor(fe)}
-						onBlur={(fe) => this.onBlurFieldEditor(fe)}
-					/>
-				))
+	// Populate fields from codebook
+	let fields = {}
+	for (let field of props.codebook) fields[field.name] = field
 
-				let isFocused =
-					this.state.focusedField != null &&
-					fieldGroups[d].find(
-						(d) => d.name === this.state.focusedField.props.data.name
-					) != null
+	// Do validation
+	let validation = validateRecord(state.record, props.codebook)
+	let valid = isValid(validation)
 
-				return (
-					<div
-						className={[
-							'field_group',
-							isFocused ? 'focused' : null,
-							this.validateFieldGroup(fieldGroups[d], validation),
-						]
-							.filter(Boolean)
-							.join(' ')}
-						key={d}
-						onClick={() => {
-							this.validateFieldGroup(fieldGroups[d], validation)
-						}}
-					>
-						{label}
-						{fields}
-					</div>
-				)
-			})
+	// Check for duplicate PIDs
+	if (
+		state.pids.filter((d) => parseInt(d) === parseInt(validation.pid.value))
+			.length > 1
+	) {
+		validation.pid.errors.push('Duplicate Patient study ID')
+		validation.pid.valid = false
+	}
+
+	// Handle leaving page with invalid record
+	let prompt =
+		!state.disableExitShield && (!valid || (state.doubleEntry && locked)) ? (
+			<Prompt
+				message={(nextLocation) => {
+					if (state.doubleEntry) {
+						return 'You have not yet completed this Double Entry. Discard changes?'
+					}
+				}}
+			></Prompt>
+		) : null
+
+	// Group fields using 'group1'
+	let groups = _.groupBy(
+		props.codebook.filter((d) => d.visible === 'yes'),
+		'group1'
+	)
+
+	// Create field groups
+	let fieldGroups = Object.keys(groups).map((k) => {
+		let i = 0
+		// Group fields in group using 'group2'
+		// This level is to group things like connected Dates and Times, or Free Text and ICD-10 codes
+		let fieldGroups = _.groupBy(groups[k], (d) =>
+			d.group2 === '' ? '_' + ++i : d.group2
+		) // HACK: Create unique id(_#) for fields with empty group2 so they are not all grouped together
+		let fieldGroupElements = Object.keys(fieldGroups).map((d) => {
+			let label = d[0] === '_' ? null : <div className="label">{d}</div>
+			let fields = fieldGroups[d].map((d) => (
+				<FieldEditor
+					key={d.name}
+					data={d}
+					disabled={locked || (state.doubleEntry && d.double_enter !== 'yes')}
+					record={state.record}
+					allowRadios={state.allowRadios}
+					validation={validation[d.name]}
+					unlabeled={d.group2 !== ''}
+					onChange={(f, v) => onChange(f, v)}
+					onFocus={(fe) => onFocusFieldEditor(fe)}
+					onBlur={(fe) => onBlurFieldEditor(fe)}
+				/>
+			))
+
+			let isFocused =
+				state.focusedField != null &&
+				fieldGroups[d].find(
+					(d) => d.name === state.focusedField.props.data.name
+				) != null
 
 			return (
-				<div className="record_group" key={k}>
-					<h2>{k}</h2>
-					<div className="fields">{fieldGroupElements}</div>
+				<div
+					className={[
+						'field_group',
+						isFocused ? 'focused' : null,
+						validateFieldGroup(fieldGroups[d], validation),
+					]
+						.filter(Boolean)
+						.join(' ')}
+					key={d}
+					onClick={() => {
+						validateFieldGroup(fieldGroups[d], validation)
+					}}
+				>
+					{label}
+					{fields}
 				</div>
 			)
 		})
 
-		let showFinalize =
-			valid &&
-			this.state.record.cr === '1' &&
-			!this.state.doubleEntry &&
-			locked !== true
-		let fieldHelp = !this.state.focusedField ? (
-			<div className="field_help"></div>
-		) : (
-			<div
-				className={
-					'field_help visible' +
-					(showFinalize || this.state.doubleEntry ? ' valid-record' : '')
-				}
-			>
-				<div className="label">{this.state.focusedField.props.data.label}</div>
-				<div className="errors">
-					{validation[this.state.focusedField.props.data.name].errors.map(
-						(d, i) => (
-							<div className="error" key={i}>
-								{d}
-							</div>
-						)
-					)}
-				</div>
-				<div className="warnings">
-					{validation[this.state.focusedField.props.data.name].warnings.map(
-						(d, i) => (
-							<div className="warning" key={i}>
-								{d}
-							</div>
-						)
-					)}
-				</div>
-				<div className="description">
-					{this.state.focusedField.props.data.description}
-					{this.state.focusedField.props.data.show_valid_values === 'yes' ? (
-						<div className="valid_values">
-							{this.formatValid(this.state.focusedField.props.data)}
-						</div>
-					) : null}
-				</div>
-				<div
-					className="coding_description"
-					dangerouslySetInnerHTML={{
-						__html: this.state.focusedField.props.data.coding_instructions,
-					}}
-				/>
+		return (
+			<div className="record_group" key={k}>
+				<h2>{k}</h2>
+				<div className="fields">{fieldGroupElements}</div>
 			</div>
 		)
+	})
 
-		let finalizeEntry = showFinalize ? (
+	let showFinalize =
+		valid && state.record.cr === '1' && !state.doubleEntry && locked !== true
+	let fieldHelp = !state.focusedField ? (
+		<div className="field_help"></div>
+	) : (
+		<div
+			className={
+				'field_help visible' +
+				(showFinalize || state.doubleEntry ? ' valid-record' : '')
+			}
+		>
+			<div className="label">{state.focusedField.props.data.label}</div>
+			<div className="errors">
+				{validation[state.focusedField.props.data.name].errors.map((d, i) => (
+					<div className="error" key={i}>
+						{d}
+					</div>
+				))}
+			</div>
+			<div className="warnings">
+				{validation[state.focusedField.props.data.name].warnings.map((d, i) => (
+					<div className="warning" key={i}>
+						{d}
+					</div>
+				))}
+			</div>
+			<div className="description">
+				{state.focusedField.props.data.description}
+				{state.focusedField.props.data.show_valid_values === 'yes' ? (
+					<div className="valid_values">
+						{formatValid(state.focusedField.props.data)}
+					</div>
+				) : null}
+			</div>
+			<div
+				className="coding_description"
+				dangerouslySetInnerHTML={{
+					__html: state.focusedField.props.data.coding_instructions,
+				}}
+			/>
+		</div>
+	)
+
+	let finalizeEntry = showFinalize ? (
+		<div className="finalize-entry">
+			<Link to={'/complete/' + state.record.uid}>
+				<button className="button is-primary is-rounded">
+					Begin double entry
+				</button>
+			</Link>
+		</div>
+	) : null
+
+	let checkEntry =
+		state.doubleEntry && locked !== true ? (
 			<div className="finalize-entry">
-				<Link to={'/complete/' + this.state.record.uid}>
-					<button className="button is-primary is-rounded">
-						Begin double entry
+				<button
+					className="button is-primary is-rounded"
+					onClick={() => checkDoubleEntry()}
+				>
+					Check
+				</button>
+				{state.doubleEntryErrors && state.doubleEntryErrors.length === 0 && (
+					<button
+						className="button is-primary is-rounded"
+						onClick={() => finalizeDoubleEntry()}
+					>
+						Finalize
 					</button>
-				</Link>
+				)}
 			</div>
 		) : null
 
-		let checkEntry =
-			this.state.doubleEntry && locked !== true ? (
-				<div className="finalize-entry">
-					<button
-						className="button is-primary is-rounded"
-						onClick={() => this.checkDoubleEntry()}
-					>
-						Check
-					</button>
-					{this.state.doubleEntryErrors &&
-						this.state.doubleEntryErrors.length === 0 && (
-							<button
-								className="button is-primary is-rounded"
-								onClick={() => this.finalizeDoubleEntry()}
-							>
-								Finalize
-							</button>
-						)}
-				</div>
-			) : null
-
-		const idField = this.props.codebook.find(
-			(d) => d.name === this.props.config.id_field
+	const idField = props.codebook.find((d) => d.name === props.config.id_field)
+	const id = state.record[props.config.id_field]
+	let titleText = state.doubleEntry
+		? `Double enter ${idField.label}: ${id}`
+		: `Editing ${idField.label}: ${id}`
+	if (locked)
+		titleText = (
+			<span>
+				<span className="fa fa-lock" /> Viewing locked {idField.label}: {id}
+			</span>
 		)
-		const id = this.state.record[this.props.config.id_field]
-		let titleText = this.state.doubleEntry
-			? `Double enter ${idField.label}: ${id}`
-			: `Editing ${idField.label}: ${id}`
-		if (locked)
-			titleText = (
-				<span>
-					<span className="fa fa-lock" /> Viewing locked {idField.label}: {id}
-				</span>
-			)
 
-		return (
-			<div className="editor">
-				<Helmet>
-					<title>{`${this.props.config.name} - ${titleText}`}</title>
-				</Helmet>
+	return (
+		<div className="editor">
+			<Helmet>
+				<title>{`${props.config.name} - ${titleText}`}</title>
+			</Helmet>
 
-				<div className="">
-					{prompt}
-					<h1>{titleText}</h1>
-					<div className="toolbar">
-						{!locked && (!this.state.doubleEntry || true) && (
-							<button
-								className="button is-rounded save-and-exit"
-								onClick={() => {
-									this.saveAndExit()
-								}}
-							>
-								Close record
-							</button>
-						)}
-						{!locked && (!this.state.doubleEntry || true) && (
+			<div className="">
+				{prompt}
+				<h1>{titleText}</h1>
+				<div className="toolbar">
+					{!locked && (!state.doubleEntry || true) && (
+						<button
+							className="button is-rounded save-and-exit"
+							onClick={() => {
+								saveAndExit()
+							}}
+						>
+							Close record
+						</button>
+					)}
+					{!locked && (!state.doubleEntry || true) && (
+						<button
+							className="button is-rounded mark-unknown"
+							onClick={() => {
+								markFieldsUnknown()
+							}}
+						>
+							Mark empty fields as Not Known
+						</button>
+					)}
+
+					{locked && (
+						<>
 							<button
 								className="button is-rounded mark-unknown"
 								onClick={() => {
-									this.markFieldsUnknown()
+									exitWithoutSaving()
 								}}
 							>
-								Mark empty fields as Not Known
+								Return
 							</button>
-						)}
-
-						{locked && (
-							<>
-								<button
-									className="button is-rounded mark-unknown"
-									onClick={() => {
-										this.exitWithoutSaving()
-									}}
-								>
-									Return
-								</button>
-								<button
-									className="button is-rounded mark-unknown"
-									onClick={() => {
-										this.unlockRecord()
-									}}
-								>
-									Unlock
-								</button>
-							</>
-						)}
-						<div className="control">
-							<label className="checkbox">
-								<input
-									type="checkbox"
-									value={this.props.allowRadios}
-									onChange={(e) => this.changeRadios(e)}
-								/>{' '}
-								[debug] Enable radio buttons
-							</label>
-						</div>
+							<button
+								className="button is-rounded mark-unknown"
+								onClick={() => {
+									unlockRecord()
+								}}
+							>
+								Unlock
+							</button>
+						</>
+					)}
+					<div className="control">
+						<label className="checkbox">
+							<input
+								type="checkbox"
+								value={props.allowRadios}
+								onChange={(e) => changeRadios(e)}
+							/>{' '}
+							[debug] Enable radio buttons
+						</label>
 					</div>
+				</div>
 
-					<div className="record_fields">{fieldGroups}</div>
-					{fieldHelp}
-					{finalizeEntry}
-					{checkEntry}
-				</div>
-				<div className="validation">
-					<ValidationViewer
-						record={this.state.record}
-						codebook={this.props.codebook}
-						validation={validation}
-					/>
-				</div>
+				<div className="record_fields">{fieldGroups}</div>
+				{fieldHelp}
+				{finalizeEntry}
+				{checkEntry}
 			</div>
-		)
-	}
-
-	changeRadios(e) {
-		this.setState({
-			allowRadios: !this.state.allowRadios,
-		})
-	}
-
-	formatValid(data) {
-		if (data.type === 'quantitative')
-			return 'Range: ' + data.valid_values.split(',').join(' .. ')
-
-		return ''
-	}
+			<div className="validation">
+				<ValidationViewer
+					record={state.record}
+					codebook={props.codebook}
+					validation={validation}
+				/>
+			</div>
+		</div>
+	)
 }
 
 export default withRouter(RecordEditor)
