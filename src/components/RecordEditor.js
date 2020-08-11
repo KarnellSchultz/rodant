@@ -7,6 +7,7 @@ import ValidationViewer from './ValidationViewer'
 import RecordEditorToolBar from './RecordEditorToolBar'
 import FieldHelpContainer from './FieldHelpContainer'
 import FieldGroupsContainer from './FieldGroupsContainer'
+import CheckEntryContainer from './CheckEntryContainer'
 
 const RecordEditorState = {
 	NONE: 0,
@@ -42,6 +43,7 @@ function RecordEditor(props) {
 
 	useEffect(() => {
 		let init = async () => {
+			console.log('render')
 			let record = await props.db.records
 				.where('uid')
 				.equals(Number(props.uid))
@@ -66,11 +68,10 @@ function RecordEditor(props) {
 			} else {
 				tempState.record = record
 			}
-			debugger
-			return setState({ ...state, ...tempState })
+			setState({ ...state, ...tempState })
 		}
 		init()
-	}, [])
+	}, [props.codebook])
 
 	async function updatePIDs() {
 		let pids = await props.db.records.toArray()
@@ -133,10 +134,10 @@ function RecordEditor(props) {
 				handleFieldChange(c, c.unknown)
 			}
 		}
-
+		debugger
 		setState({
 			...state,
-			state: state.recordEditorState,
+			recordEditorState: state.recordEditorState,
 			record: record,
 			focusedField: null,
 		})
@@ -148,7 +149,6 @@ function RecordEditor(props) {
 		await props.db.records.where('uid').equals(Number(props.uid)).modify({
 			locked: false,
 		})
-
 		setState({ ...state, record: record })
 	}
 
@@ -287,26 +287,6 @@ function RecordEditor(props) {
 		</div>
 	) : null
 
-	let checkEntry =
-		state.doubleEntry && state.isLocked !== true ? (
-			<div className="finalize-entry">
-				<button
-					className="button is-primary is-rounded"
-					onClick={() => checkDoubleEntry()}
-				>
-					Check
-				</button>
-				{state.doubleEntryErrors && state.doubleEntryErrors.length === 0 && (
-					<button
-						className="button is-primary is-rounded"
-						onClick={() => finalizeDoubleEntry()}
-					>
-						Finalize
-					</button>
-				)}
-			</div>
-		) : null
-
 	const idField = props.codebook.find((d) => d.name === props.config.id_field)
 	const id = state.record[props.config.id_field]
 	let titleText = state.doubleEntry
@@ -363,7 +343,13 @@ function RecordEditor(props) {
 					formatValid={formatValid}
 				/>
 				{finalizeEntry}
-				{checkEntry}
+				<CheckEntryContainer
+					doubleEntry={state.doubleEntry}
+					isLocked={state.isLocked}
+					checkDoubleEntry={checkDoubleEntry}
+					doubleEntryErrors={state.doubleEntryErrors}
+					finalizeDoubleEntry={finalizeDoubleEntry}
+				/>
 			</div>
 			<div className="validation">
 				<ValidationViewer

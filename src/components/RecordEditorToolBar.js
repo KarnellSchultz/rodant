@@ -15,9 +15,7 @@ export default function RecordEditorToolBar({
 			{!locked && (!doubleEntry || true) && (
 				<button
 					className="button is-rounded save-and-exit"
-					onClick={() => {
-						saveAndExit()
-					}}
+					onClick={saveAndExit}
 				>
 					Close record
 				</button>
@@ -25,9 +23,7 @@ export default function RecordEditorToolBar({
 			{!locked && (!doubleEntry || true) && (
 				<button
 					className="button is-rounded mark-unknown"
-					onClick={() => {
-						markFieldsUnknown()
-					}}
+					onClick={() => markFieldsUnknown()}
 				>
 					Mark empty fields as Not Known
 				</button>
@@ -37,17 +33,13 @@ export default function RecordEditorToolBar({
 				<>
 					<button
 						className="button is-rounded mark-unknown"
-						onClick={() => {
-							exitWithoutSaving()
-						}}
+						onClick={exitWithoutSaving}
 					>
 						Return
 					</button>
 					<button
 						className="button is-rounded mark-unknown"
-						onClick={() => {
-							unlockRecord()
-						}}
+						onClick={unlockRecord}
 					>
 						Unlock
 					</button>
@@ -59,8 +51,8 @@ export default function RecordEditorToolBar({
 						type="checkbox"
 						value={allowRadios}
 						onChange={(e) => changeRadios(e)}
-					/>{' '}
-					[debug] Enable radio buttons
+					/>
+					{`[debug] Enable radio buttons`}
 				</label>
 			</div>
 		</div>
