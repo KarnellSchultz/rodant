@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react'
+import React, { useEffect, useReducer } from 'react'
 import { useHistory, Prompt, Link, withRouter } from 'react-router-dom'
 import { validateRecord, isValid } from '../functions/validation'
 import Helmet from 'react-helmet'
@@ -41,16 +41,17 @@ function RecordEditor(props) {
 
   let history = useHistory() //access react routers history object via hooks
 
+  // This will automatically merge new value with current state
+  // API is dispatch({stateFieldName: value})
   const reducer = (currentState, newState) => {
     return { ...currentState, ...newState }
   }
-  // API is dispatch({stateFieldName: value})
-  // This will automatically merge new value with current state
-  const [state, dispatch] = useReducer(reducer, initialState)
-  useEffect(() => {
-    console.log('EFFECTING')
 
+  const [state, dispatch] = useReducer(reducer, initialState)
+
+  useEffect(() => {
     let init = async () => {
+      console.log('init')
       let databaseRecords = await props.db.records.toArray()
 
       let currentEditingRecord = databaseRecords.filter(
@@ -61,18 +62,40 @@ function RecordEditor(props) {
       let isLockedValue = returnLockedValueAsBoolean(
         currentEditingRecord.locked
       )
+      let tempState = {}
+      if (state.doubleEntry) {
+        tempState.referenceRecord = { ...currentEditingRecord }
+        tempState.record = { uid: props.uid }
+        props.codebook
+          .filter((element) => element.double_enter !== 'yes')
+          .forEach(
+            (el) => (tempState.record[el.name] = currentEditingRecord[el.name])
+          )
+      }
 
-      dispatch({
-        record: currentEditingRecord,
-        pids: pidArray,
-        isLocked: isLockedValue,
-        recordEditorState: RecordEditorState.READY,
-      })
-      console.log({ pidArray, currentEditingRecord, databaseRecords })
+      if (currentEditingRecord) {
+        dispatch({
+          record: currentEditingRecord,
+          pids: pidArray,
+          isLocked: isLockedValue,
+          recordEditorState: RecordEditorState.READY,
+        })
+      } else {
+        dispatch({
+          recordEditorState: RecordEditorState.NONE,
+        })
+      }
     }
     init()
-    console.log({ reducer })
-  }, [props.db.records, props.uid, state.isLocked])
+  }, [
+    props.codebook,
+    props.db.records,
+    props.uid,
+    state.doubleEntry,
+    state.isLocked,
+  ])
+
+  function handleDoubleEntery() {}
 
   async function updateRecordState() {
     let record = await props.db.records
@@ -82,43 +105,6 @@ function RecordEditor(props) {
 
     dispatch({ record: record })
   }
-  //   useEffect(() => {
-  //     let init = async () => {
-  //       console.log('render')
-  //       let record = await props.db.records
-  //         .where('uid')
-  //         .equals(Number(props.uid))
-  //         .first()
-
-  //       dispatch({ type: 'UPDATE_RECORDS', payload: record })
-
-  //       let tempPids = await props.db.records.toArray()
-  //       tempPids = tempPids.map((el) => el.pid)
-  //       dispatch({ type: 'UPDATE_PIDS', payload: tempPids })
-
-  //       let tempState = {}
-  //       tempState = {
-  //         recordEditorState: !record
-  //           ? RecordEditorState.NOTFOUND
-  //           : RecordEditorState.READY,
-  //         pids: tempPids.map((el) => el.pid),
-  //         isLocked: returnLockedValueAsBoolean(record.locked),
-  //       }
-
-  //       if (tempState.doubleEntry) {
-  //         console.log(tempState.doubleEntry, 'TRUE')
-  //         tempState.referenceRecord = { ...record }
-  //         tempState.record = { uid: props.uid }
-  //         props.codebook
-  //           .filter((d) => d.double_enter !== 'yes')
-  //           .forEach((d) => (tempState.record[d.name] = record[d.name]))
-  //       } else {
-  //         tempState.record = record
-  //       }
-  //       setState((state) => ({ ...state, ...tempState }))
-  //     }
-  //     init()
-  //   }, [props.codebook, props.db.records, props.uid])
 
   async function updatePIDs() {
     let pids = await props.db.records.toArray()
@@ -181,7 +167,6 @@ function RecordEditor(props) {
         handleFieldChange(c, c.unknown)
       }
     }
-    debugger
     dispatch({
       recordEditorState: state.recordEditorState,
       record: record,
@@ -190,13 +175,11 @@ function RecordEditor(props) {
   }
 
   async function unlockRecord() {
-    console.log('RUUNNING')
     let tempRecord = { ...state.record }
     tempRecord.locked = false
     await props.db.records.where('uid').equals(Number(props.uid)).modify({
       locked: false,
     }) // updates the locked value in the database
-    debugger
     dispatch({ isLocked: false, record: tempRecord })
     updateRecordState()
   }
@@ -303,10 +286,10 @@ function RecordEditor(props) {
   // Do validation
   let validation = validateRecord(state.record, props.codebook)
   let valid = isValid(validation)
-
+  debugger
   // Check for duplicate PIDs
   if (
-    state.pids.filter((d) => parseInt(d) === parseInt(validation.pid.value))
+    state.pids.filter((pid) => parseInt(pid) === parseInt(validation.pid.value))
       .length > 1
   ) {
     validation.pid.errors.push('Duplicate Patient study ID')
@@ -337,7 +320,6 @@ function RecordEditor(props) {
 
   const idField = props.codebook.find((d) => d.name === props.config.id_field)
   const id = state.record[props.config.id_field]
-  debugger
   let titleText = state.doubleEntry
     ? `Double enter ${idField.label}: ${id}`
     : `Editing ${idField.label}: ${id}`
@@ -410,5 +392,4 @@ function RecordEditor(props) {
     </div>
   )
 }
-
 export default withRouter(RecordEditor)
