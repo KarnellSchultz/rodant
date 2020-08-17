@@ -95,8 +95,6 @@ function RecordEditor(props) {
     state.isLocked,
   ])
 
-  function handleDoubleEntery() {}
-
   async function updateRecordState() {
     let record = await props.db.records
       .where('uid')
