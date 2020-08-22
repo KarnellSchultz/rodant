@@ -19,4 +19,6 @@ app.use(cors())
 app.use('/', indexRouter)
 app.use('/users', usersRouter)
 
+console.log('')
+
 module.exports = app

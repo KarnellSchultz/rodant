@@ -44,6 +44,16 @@ async function bootstrap() {
 
 	const syncClient = new SyncClient(databaseName, versions)
 
+	const syncServerURL = 'http://localhost:3002/'
+
+	console.log(syncClient)
+	//connecting to server db
+	try {
+		syncClient.connect(syncServerURL)
+	} catch (error) {
+		console.error(error)
+	}
+
 	// ****************************************************
 	// Bootstrap the 'App'
 	ReactDOM.render(
