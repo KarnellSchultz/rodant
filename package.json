@@ -22,7 +22,8 @@
 		"sync-client": "^1.0.0-beta.11"
 	},
 	"scripts": {
-		"start": "concurrently \"cd backend && nodemon start\" \"cd backend/sync-server && sync-server start --path /Users/karschultz/Documents/OS/rodant/backend/sync-server\" \"react-scripts start\"",
+		"dev": "concurrently \"cd backend && nodemon start\" \"cd backend/sync-server && sync-server start --path /Users/karschultz/Documents/OS/rodant/backend/sync-server\" \"react-scripts start\"",
+		"start": "react-scripts start",
 		"build": "react-scripts build",
 		"test": "react-scripts test",
 		"eject": "react-scripts eject"
