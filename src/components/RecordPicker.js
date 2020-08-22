@@ -30,6 +30,9 @@ function RecordPicker(props) {
 		page: 0,
 	})
 
+	// props.syncDB.friends.toArray().then((data) => console.log(data))
+	console.log(props.syncDB.records, props.db.records)
+
 	const [localStorageValue, setLocalStorageValue] = useLocalStorage(
 		'recordPickerSortingState',
 		{

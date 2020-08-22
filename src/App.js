@@ -21,6 +21,7 @@ class App extends React.Component {
 				db={this.props.db}
 				codebook={this.props.codebook}
 				config={this.props.config}
+				syncDB={this.props.syncDB}
 			/>
 		)
 		let recordEditor = (match) => (

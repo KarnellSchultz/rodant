@@ -3,9 +3,10 @@ import ReactDOM from 'react-dom'
 import App from './App'
 import * as serviceWorker from './serviceWorker'
 import csv from 'async-csv'
-import dexie from 'dexie'
 import { csvToCodebook } from './functions/codebook'
 
+import SyncClient from 'sync-client'
+import dexie from 'dexie'
 // Start service worker
 serviceWorker.register()
 
@@ -27,12 +28,26 @@ async function bootstrap() {
 	let store = {
 		records: desc,
 	}
-
 	db.version(DB_VERSION).stores(store)
 
+	// SyncClient is a subclass of Dexie
+	const databaseName = 'TESTINGDB' // The name for the indexedDB database *** CONFIG.TABLE ***
+	const versions = [
+		{
+			version: 1,
+			stores: {
+				// Has the same format as https://github.com/dfahlander/Dexie.js/wiki/Version.stores()
+				records: desc,
+			},
+		},
+	]
+
+	const syncClient = new SyncClient(databaseName, versions)
+
+	// ****************************************************
 	// Bootstrap the 'App'
 	ReactDOM.render(
-		<App codebook={items} db={db} config={config} />,
+		<App codebook={items} db={db} syncDB={syncClient} config={config} />,
 		document.getElementById('root')
 	)
 
