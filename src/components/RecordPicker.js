@@ -31,7 +31,18 @@ function RecordPicker(props) {
 	})
 
 	// props.syncDB.friends.toArray().then((data) => console.log(data))
-	console.log(props.syncDB.records, props.db.records)
+	useEffect(() => {
+		let getIt = async () => {
+			// let records = await props.syncDB.records.toArray()
+			// console.log(props.syncDB.records.toArray())
+			// console.log(props.db.records.toArray().then((data) => console.log(data)))
+			let data = await props.syncDB.records.put({
+				records: 'BOABEAGAE',
+			})
+			console.log(data)
+		}
+		getIt()
+	}, [])
 
 	const [localStorageValue, setLocalStorageValue] = useLocalStorage(
 		'recordPickerSortingState',

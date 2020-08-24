@@ -5,8 +5,11 @@ import * as serviceWorker from './serviceWorker'
 import csv from 'async-csv'
 import { csvToCodebook } from './functions/codebook'
 
+// SyncClient is a subclass of Dexie
 import SyncClient from 'sync-client'
+
 import dexie from 'dexie'
+
 // Start service worker
 serviceWorker.register()
 
@@ -28,28 +31,29 @@ async function bootstrap() {
 	let store = {
 		records: desc,
 	}
+
 	db.version(DB_VERSION).stores(store)
 
 	// SyncClient is a subclass of Dexie
-	const databaseName = 'TESTINGDB' // The name for the indexedDB database *** CONFIG.TABLE ***
+	const syncServerURL = 'http://localhost:3002/'
+	const databaseName = 'SUNDAYTEST-records' // The name for the indexedDB database *** CONFIG.TABLE ***
 	const versions = [
 		{
 			version: 1,
-			stores: {
-				// Has the same format as https://github.com/dfahlander/Dexie.js/wiki/Version.stores()
-				records: desc,
-			},
+			stores: store,
 		},
 	]
 
 	const syncClient = new SyncClient(databaseName, versions)
 
-	const syncServerURL = 'http://localhost:3002/'
-
 	console.log(syncClient)
 	//connecting to server db
 	try {
-		syncClient.connect(syncServerURL)
+		syncClient
+			.connect(syncServerURL)
+			.then(() =>
+				syncClient.getStatuses().then((data) => console.log(data[0].status))
+			)
 	} catch (error) {
 		console.error(error)
 	}
