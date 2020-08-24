@@ -14,7 +14,14 @@ var http = require('http')
 
 var port = normalizePort(process.env.PORT || '3001')
 app.set('port', port)
-console.log(`🦠🦠🦠Server running on PORT:${port}🦠🦠🦠`)
+console.log(`
+🦠 🦠 🦠\u001b[35mServer running on PORT:${port}🦠 🦠 🦠
+🚧		🚧		🚧		🚧
+\u001b[34m If app already running on this port try:
+ $ lsof -n -i4TCP:${port}
+ $ kill -9 ${port}
+🚧		🚧		🚧		🚧
+`)
 
 /**
  * Create HTTP server.

@@ -36,7 +36,7 @@ async function bootstrap() {
 
 	// SyncClient is a subclass of Dexie
 	const syncServerURL = 'http://localhost:3002/'
-	const databaseName = 'SUNDAYTEST-records' // The name for the indexedDB database *** CONFIG.TABLE ***
+	const databaseName = 'Monday-TEST' // The name for the indexedDB database *** CONFIG.TABLE ***
 	const versions = [
 		{
 			version: 1,
