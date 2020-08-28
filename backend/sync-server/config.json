@@ -15,6 +15,7 @@
 		"opts": {}
 	},
 	"sync": {
-		"partialsThreshold": 1000
+		"partialsThreshold": 10000,
+		"partial": true
 	}
 }

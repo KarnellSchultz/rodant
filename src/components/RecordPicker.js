@@ -175,7 +175,6 @@ function RecordPicker(props) {
 	}
 
 	function onPageChange(page) {
-		debugger
 		setState({ ...state, page: parseInt(page) })
 		// dispatch({
 		// 	type: 'PAGE_UPDATE',
@@ -221,12 +220,10 @@ function RecordPicker(props) {
 	}
 
 	let searchHits = {}
-	const sortField = props.codebook.find(
-		(d) =>
-			d.name ===
-			JSON.parse(window.localStorage.getItem('recordPickerSortingState'))
-				.sortField
-	)
+	let sortField = ''
+	state.sortField
+		? (sortField = props.codebook.find((d) => d.name === state.sortField))
+		: (sortField = 'pid')
 
 	useEffect(() => {
 		filterAndSortRecords()
@@ -291,7 +288,6 @@ function RecordPicker(props) {
 				return false
 			})
 			.sort((a, b) => {
-				debugger
 				// Handle quantitative values with parseInt
 				if (sortField.type === 'quantitative' || sortField.name === 'pid')
 					return (

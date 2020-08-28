@@ -8,12 +8,9 @@ import { csvToCodebook } from './functions/codebook'
 // SyncClient is a subclass of Dexie
 import SyncClient from 'sync-client'
 
-import dexie from 'dexie'
-
 // Start service worker
 serviceWorker.register()
 
-const DB_VERSION = 1
 async function bootstrap() {
 	// Load config
 	let configRequest = await fetch(`${process.env.PUBLIC_URL}/config.json`)
@@ -25,35 +22,27 @@ async function bootstrap() {
 	let csvString = await csv.parse(codebook)
 	let items = csvToCodebook(csvString)
 
-	// Initialize Dexie database
-	let db = new dexie(config.table)
+	// Initialize Sync-Server database >> subclass of Dexie
 	let desc = '++uid, locked, ' + items.map((d) => d.name).join(', ')
 	let store = {
 		records: desc,
 	}
 
-	db.version(DB_VERSION).stores(store)
-
-	// SyncClient is a subclass of Dexie
+	const DB_VERSION = 1
 	const syncServerURL = 'http://localhost:3002/'
-	const databaseName = 'Monday-TEST' // The name for the indexedDB database *** CONFIG.TABLE ***
+	const databaseName = config.table // The name for the indexedDB database *** config.table ***
 	const versions = [
 		{
-			version: 1,
+			version: DB_VERSION,
 			stores: store,
 		},
 	]
-
+	//init sync-client database
 	const syncClient = new SyncClient(databaseName, versions)
 
-	console.log(syncClient)
-	//connecting to server db
+	//connecting to sync-server
 	try {
-		syncClient
-			.connect(syncServerURL)
-			.then(() =>
-				syncClient.getStatuses().then((data) => console.log(data[0].status))
-			)
+		syncClient.connect(syncServerURL)
 	} catch (error) {
 		console.error(error)
 	}
@@ -61,7 +50,7 @@ async function bootstrap() {
 	// ****************************************************
 	// Bootstrap the 'App'
 	ReactDOM.render(
-		<App codebook={items} db={db} syncDB={syncClient} config={config} />,
+		<App codebook={items} db={syncClient} config={config} />,
 		document.getElementById('root')
 	)
 
