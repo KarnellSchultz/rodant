@@ -178,7 +178,6 @@ function RecordPicker(props) {
 	}
 
 	function onPageChange(page) {
-		debugger
 		setState({ ...state, page: parseInt(page) })
 		// dispatch({
 		// 	type: 'PAGE_UPDATE',

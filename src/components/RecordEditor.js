@@ -68,6 +68,7 @@ class RecordEditor extends React.Component {
 		}
 
 		this.setState(state)
+		console.log(record)
 	}
 
 	async updatePIDs() {
@@ -205,10 +206,21 @@ class RecordEditor extends React.Component {
 			)
 			.map((d) => d.name)
 
-		console.log(errors)
 		this.setState({
 			doubleEntryErrors: errors,
 		})
+	}
+
+	async handleClose() {
+		if (
+			this.state.record.name.includes('Unnamed') &&
+			Object.keys(this.state.record).length === 3
+		) {
+			this.props.db.records.where('uid').equals(this.state.record.uid).delete()
+			this.saveAndExit()
+		} else {
+			this.saveAndExit()
+		}
 	}
 
 	async finalizeDoubleEntry() {
@@ -467,7 +479,7 @@ class RecordEditor extends React.Component {
 							<button
 								className="button is-rounded save-and-exit"
 								onClick={() => {
-									this.saveAndExit()
+									this.handleClose()
 								}}
 							>
 								Close record
