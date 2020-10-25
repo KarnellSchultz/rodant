@@ -211,11 +211,8 @@ class RecordEditor extends React.Component {
 		})
 	}
 
-	async handleClose() {
-		if (
-			this.state.record.name.includes('Unnamed') &&
-			Object.keys(this.state.record).length === 3
-		) {
+	handleClose() {
+		if (!Object.keys(this.state.record).includes('pid')) {
 			this.props.db.records.where('uid').equals(this.state.record.uid).delete()
 			this.saveAndExit()
 		} else {
