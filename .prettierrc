@@ -1,6 +1,10 @@
 {
-	"trailingComma": "es6",
+	"trailingComma": "es5",
 	"semi": false,
 	"singleQuote": true,
-	"useTabs": true
+	"useTabs": true,
+	"printWidth": 70,
+	"jsxBracketSameLine": true,
+	"arrowParens": "always",
+	"parser": "babel"
 }

@@ -25,3 +25,5 @@ package-lock.json
 
 **/*~
 PROJECT.org
+
+.vscode/
