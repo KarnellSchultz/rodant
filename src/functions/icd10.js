@@ -8,11 +8,12 @@ async function search(code, allowed = []) {
 	// Try codes first...
 	let codes = Object.keys(database)
 		.filter(
-			d =>
+			(d) =>
 				d.startsWith(code) &&
-				(allowed.length === 0 || allowed.some(d => d.startsWith(code)))
+				(allowed.length === 0 ||
+					allowed.some((d) => d.startsWith(code)))
 		)
-		.map(d => [d, database[d]])
+		.map((d) => [d, database[d]])
 
 	if (codes.length > 0) return codes
 
@@ -21,14 +22,11 @@ async function search(code, allowed = []) {
 
 	return Object.keys(database)
 		.filter(
-			d =>
+			(d) =>
 				database[d] &&
-				database[d]
-					.toString()
-					.toUpperCase()
-					.indexOf(code) !== -1
+				database[d].toString().toUpperCase().indexOf(code) !== -1
 		)
-		.map(d => [d, database[d]])
+		.map((d) => [d, database[d]])
 }
 
 export default search

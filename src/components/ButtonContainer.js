@@ -28,7 +28,8 @@ function ButtonContainer({
 	}
 
 	async function handleCsvImport(importCsvFile) {
-		if (!window.confirm(`Importing may overwrite data. Continue?`)) return
+		if (!window.confirm(`Importing may overwrite data. Continue?`))
+			return
 		if (importCsvFile.text) {
 			let text = await importCsvFile.text()
 			importCSVText(text)
@@ -59,12 +60,13 @@ function ButtonContainer({
 					<FilePicker
 						extensions={['csv']}
 						maxSize={100}
-						onChange={(importCsvFile) => handleCsvImport(importCsvFile)}
+						onChange={(importCsvFile) =>
+							handleCsvImport(importCsvFile)
+						}
 						onError={(err) => {
 							console.log('Upload error', err)
 							alert(err.toString())
-						}}
-					>
+						}}>
 						<button className="button ">Import from CSV</button>
 					</FilePicker>
 				</div>

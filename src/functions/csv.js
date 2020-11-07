@@ -56,7 +56,8 @@ function exportCSV(codebook, records) {
 		}
 
 		let result = ''
-		for (let r of data) result += r.join(csv_separator) + csv_row_break
+		for (let r of data)
+			result += r.join(csv_separator) + csv_row_break
 
 		resolve(result)
 	})
@@ -84,7 +85,8 @@ async function importCSV(text, db) {
 							let k = headers[i]
 							let v = r[i]
 
-							if (v !== '<unset>') record[k] = k === 'uid' ? parseInt(v) : v
+							if (v !== '<unset>')
+								record[k] = k === 'uid' ? parseInt(v) : v
 						}
 
 						records.push(record)

@@ -26,7 +26,9 @@ export default function RecordsContainer({
 			let values = getList(field.valid_values).map((d) => parseInt(d))
 			let labels = getList(field.value_labels)
 			let value = parseInt(record[fieldName])
-			return labels[values.find((d) => d.toString() === value.toString())]
+			return labels[
+				values.find((d) => d.toString() === value.toString())
+			]
 		}
 
 		if (isUnknown(record[fieldName] || '', field)) return 'unknown'
@@ -54,17 +56,17 @@ export default function RecordsContainer({
 				)
 			}
 
-			let locked = (d.locked || '').toString().toLowerCase() === 'true'
+			let locked =
+				(d.locked || '').toString().toLowerCase() === 'true'
 			return (
 				<div key={d.uid}>
 					<Link
 						key={d.uid}
 						to={'/record/' + d.uid}
-						className={`list-item ${locked ? ' locked' : ''}`}
-					>
+						className={`list-item ${locked ? ' locked' : ''}`}>
 						<span className="pid">
-							{locked && <span className="fa fa-lock"> </span>} {d.pid}{' '}
-							{issueDisplay}
+							{locked && <span className="fa fa-lock"> </span>}{' '}
+							{d.pid} {issueDisplay}
 						</span>
 						<span className="hits">
 							{searchHits[d.uid]
@@ -86,8 +88,7 @@ export default function RecordsContainer({
 							}}
 							className={`button ${
 								d.locked === 'TRUE' ? 'is-disabled' : ' is-danger'
-							} is-small is-outlined  remove`}
-						>
+							} is-small is-outlined  remove`}>
 							<span className="fa fa-remove" />
 						</button>
 					</Link>

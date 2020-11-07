@@ -3,7 +3,7 @@
  * Defaults to 'application/octet-stream'
  */
 
-export default function(
+export default function (
 	data,
 	filename,
 	prefix = 'data:application/octet-stream,'

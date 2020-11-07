@@ -8,7 +8,7 @@ import RecordEditor from './components/RecordEditor'
 import RecordPicker from './components/RecordPicker'
 import packagejson from '../package.json'
 import Nav from './components/Nav'
-import {ModalProvider} from './components/modal'
+import { ModalProvider } from './components/modal'
 
 /**
  * Container for the application.
@@ -41,12 +41,12 @@ function App({ db, codebook, config }) {
 	return (
 		<Router basename={process.env.PUBLIC_URL}>
 			<ModalProvider>
-			<Nav name={config.name} version={packagejson.version} />
-			<div className="container">
-				<Route path="/" exact component={recordPicker} />
-				<Route path="/record/:uid" component={recordEditor} />
-				<Route path="/complete/:uid" component={doubleEntry} />
-			</div>
+				<Nav name={config.name} version={packagejson.version} />
+				<div className="container">
+					<Route path="/" exact component={recordPicker} />
+					<Route path="/record/:uid" component={recordEditor} />
+					<Route path="/complete/:uid" component={doubleEntry} />
+				</div>
 			</ModalProvider>
 		</Router>
 	)

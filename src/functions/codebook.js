@@ -11,7 +11,9 @@ function getDirectDeps(field, find, visited = []) {
 
 	// Add calculated fields
 	if (field.calculated === 'yes')
-		field.equation.match(findVarRegex).forEach((d) => (mentioned[d] = find(d)))
+		field.equation
+			.match(findVarRegex)
+			.forEach((d) => (mentioned[d] = find(d)))
 
 	// Add logic checks
 	if (field.logic_checks)
@@ -28,7 +30,8 @@ function getDepsRecursive(field, visited = []) {
 	if (visited.indexOf(field) !== -1) return
 
 	visited.push(field)
-	for (let dep of field.directDependencies) getDepsRecursive(dep, visited)
+	for (let dep of field.directDependencies)
+		getDepsRecursive(dep, visited)
 
 	return visited
 }
@@ -52,7 +55,8 @@ function csvToCodebook(csv) {
 			codebook.find((d) => d.name === e)
 		)
 
-	for (let field of codebook) field.dependencies = getDepsRecursive(field)
+	for (let field of codebook)
+		field.dependencies = getDepsRecursive(field)
 
 	return codebook
 }

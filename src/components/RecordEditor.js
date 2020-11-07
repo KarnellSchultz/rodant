@@ -51,7 +51,9 @@ class RecordEditor extends React.Component {
 		let pids = await this.props.db.records.toArray()
 
 		let state = {
-			state: !record ? RecordEditorState.NOTFOUND : RecordEditorState.READY,
+			state: !record
+				? RecordEditorState.NOTFOUND
+				: RecordEditorState.READY,
 			pids: pids.map((d) => d.pid),
 		}
 
@@ -95,7 +97,8 @@ class RecordEditor extends React.Component {
 			.modify(modify)
 
 		// If the field that changed was idField, update the cached id numbers
-		if (field.name === this.props.config.id_field) await this.updatePIDs()
+		if (field.name === this.props.config.id_field)
+			await this.updatePIDs()
 	}
 
 	onFocusFieldEditor(fe) {
@@ -173,15 +176,19 @@ class RecordEditor extends React.Component {
 	validateFieldGroup(group, validation) {
 		if (
 			this.state.doubleEntryErrors &&
-			group.some((d) => this.state.doubleEntryErrors.indexOf(d.name) !== -1)
+			group.some(
+				(d) => this.state.doubleEntryErrors.indexOf(d.name) !== -1
+			)
 		)
 			return 'double-entry-error'
 
 		if (group.some((d) => d.input !== 'yes')) return 'valid'
 
-		if (group.some((d) => validation[d.name].unknown)) return 'unknown'
+		if (group.some((d) => validation[d.name].unknown))
+			return 'unknown'
 
-		if (group.some((d) => validation[d.name].incomplete)) return 'incomplete'
+		if (group.some((d) => validation[d.name].incomplete))
+			return 'incomplete'
 
 		if (group.some((d) => !validation[d.name].valid)) return 'invalid'
 
@@ -199,7 +206,8 @@ class RecordEditor extends React.Component {
 					d.double_enter === 'yes' &&
 					d.input === 'yes' &&
 					d.calculated !== 'yes' &&
-					this.state.referenceRecord[d.name] !== this.state.record[d.name]
+					this.state.referenceRecord[d.name] !==
+						this.state.record[d.name]
 			)
 			.map((d) => d.name)
 
@@ -211,8 +219,15 @@ class RecordEditor extends React.Component {
 
 	handleClose() {
 		// checks if the record has a id field on the record object. If not, the record is not saved.
-		if (!Object.keys(this.state.record).includes(this.props.config.id_field)) {
-			this.props.db.records.where('uid').equals(this.state.record.uid).delete()
+		if (
+			!Object.keys(this.state.record).includes(
+				this.props.config.id_field
+			)
+		) {
+			this.props.db.records
+				.where('uid')
+				.equals(this.state.record.uid)
+				.delete()
 			this.saveAndExit()
 		} else {
 			this.saveAndExit()
@@ -273,7 +288,10 @@ class RecordEditor extends React.Component {
 		for (let field of this.props.codebook) fields[field.name] = field
 
 		// Do validation
-		let validation = validateRecord(this.state.record, this.props.codebook)
+		let validation = validateRecord(
+			this.state.record,
+			this.props.codebook
+		)
 		let valid = isValid(validation)
 
 		// Check for duplicate PIDs
@@ -295,8 +313,7 @@ class RecordEditor extends React.Component {
 						if (this.state.doubleEntry) {
 							return 'You have not yet completed this Double Entry. Discard changes?'
 						}
-					}}
-				></Prompt>
+					}}></Prompt>
 			) : null
 
 		// Group fields using 'group1'
@@ -314,13 +331,15 @@ class RecordEditor extends React.Component {
 				d.group2 === '' ? '_' + ++i : d.group2
 			) // HACK: Create unique id(_#) for fields with empty group2 so they are not all grouped together
 			let fieldGroupElements = Object.keys(fieldGroups).map((d) => {
-				let label = d[0] === '_' ? null : <div className="label">{d}</div>
+				let label =
+					d[0] === '_' ? null : <div className="label">{d}</div>
 				let fields = fieldGroups[d].map((d) => (
 					<FieldEditor
 						key={d.name}
 						data={d}
 						disabled={
-							locked || (this.state.doubleEntry && d.double_enter !== 'yes')
+							locked ||
+							(this.state.doubleEntry && d.double_enter !== 'yes')
 						}
 						record={this.state.record}
 						allowRadios={this.state.allowRadios}
@@ -350,8 +369,7 @@ class RecordEditor extends React.Component {
 						key={d}
 						onClick={() => {
 							this.validateFieldGroup(fieldGroups[d], validation)
-						}}
-					>
+						}}>
 						{label}
 						{fields}
 					</div>
@@ -377,31 +395,35 @@ class RecordEditor extends React.Component {
 			<div
 				className={
 					'field_help visible' +
-					(showFinalize || this.state.doubleEntry ? ' valid-record' : '')
-				}
-			>
-				<div className="label">{this.state.focusedField.props.data.label}</div>
+					(showFinalize || this.state.doubleEntry
+						? ' valid-record'
+						: '')
+				}>
+				<div className="label">
+					{this.state.focusedField.props.data.label}
+				</div>
 				<div className="errors">
-					{validation[this.state.focusedField.props.data.name].errors.map(
-						(d, i) => (
-							<div className="error" key={i}>
-								{d}
-							</div>
-						)
-					)}
+					{validation[
+						this.state.focusedField.props.data.name
+					].errors.map((d, i) => (
+						<div className="error" key={i}>
+							{d}
+						</div>
+					))}
 				</div>
 				<div className="warnings">
-					{validation[this.state.focusedField.props.data.name].warnings.map(
-						(d, i) => (
-							<div className="warning" key={i}>
-								{d}
-							</div>
-						)
-					)}
+					{validation[
+						this.state.focusedField.props.data.name
+					].warnings.map((d, i) => (
+						<div className="warning" key={i}>
+							{d}
+						</div>
+					))}
 				</div>
 				<div className="description">
 					{this.state.focusedField.props.data.description}
-					{this.state.focusedField.props.data.show_valid_values === 'yes' ? (
+					{this.state.focusedField.props.data.show_valid_values ===
+					'yes' ? (
 						<div className="valid_values">
 							{this.formatValid(this.state.focusedField.props.data)}
 						</div>
@@ -410,7 +432,8 @@ class RecordEditor extends React.Component {
 				<div
 					className="coding_description"
 					dangerouslySetInnerHTML={{
-						__html: this.state.focusedField.props.data.coding_instructions,
+						__html: this.state.focusedField.props.data
+							.coding_instructions,
 					}}
 				/>
 			</div>
@@ -431,16 +454,14 @@ class RecordEditor extends React.Component {
 				<div className="finalize-entry">
 					<button
 						className="button is-primary "
-						onClick={() => this.checkDoubleEntry()}
-					>
+						onClick={() => this.checkDoubleEntry()}>
 						Check
 					</button>
 					{this.state.doubleEntryErrors &&
 						this.state.doubleEntryErrors.length === 0 && (
 							<button
 								className="button is-primary "
-								onClick={() => this.finalizeDoubleEntry()}
-							>
+								onClick={() => this.finalizeDoubleEntry()}>
 								Finalize
 							</button>
 						)}
@@ -457,7 +478,8 @@ class RecordEditor extends React.Component {
 		if (locked)
 			titleText = (
 				<span>
-					<span className="fa fa-lock" /> Viewing locked {idField.label}: {id}
+					<span className="fa fa-lock" /> Viewing locked{' '}
+					{idField.label}: {id}
 				</span>
 			)
 
@@ -476,8 +498,7 @@ class RecordEditor extends React.Component {
 								className="button  save-and-exit"
 								onClick={() => {
 									this.handleClose()
-								}}
-							>
+								}}>
 								Close record
 							</button>
 						)}
@@ -486,8 +507,7 @@ class RecordEditor extends React.Component {
 								className="button  mark-unknown"
 								onClick={() => {
 									this.markFieldsUnknown()
-								}}
-							>
+								}}>
 								Mark empty fields as Not Known
 							</button>
 						)}
@@ -498,16 +518,14 @@ class RecordEditor extends React.Component {
 									className="button  mark-unknown"
 									onClick={() => {
 										this.exitWithoutSaving()
-									}}
-								>
+									}}>
 									Return
 								</button>
 								<button
 									className="button  mark-unknown"
 									onClick={() => {
 										this.unlockRecord()
-									}}
-								>
+									}}>
 									Unlock
 								</button>
 							</>

@@ -33,7 +33,9 @@ class Autocomplete extends React.Component {
 	onKeyDown(e) {
 		// Move up
 		if (e.key === 'ArrowUp') {
-			this.setState({ selected: Math.max(0, this.state.selected - 1) })
+			this.setState({
+				selected: Math.max(0, this.state.selected - 1),
+			})
 			e.preventDefault()
 		}
 
@@ -111,19 +113,23 @@ class Autocomplete extends React.Component {
 
 	render() {
 		// Format search results
-		let results = this.state.matches.slice(0, this.maxResults).map((d, i) => (
-			<div
-				ref={i === this.state.selected ? this.selectedRef : null}
-				className={['row', i === this.state.selected ? 'selected' : '']
-					.filter(Boolean)
-					.join(' ')}
-				key={d[0]}
-				onMouseDown={e => this.onClickRow(e, d[0], i)}
-			>
-				<div className="code">{d[0]}</div>
-				<div className="description">{d[1]}</div>
-			</div>
-		))
+		let results = this.state.matches
+			.slice(0, this.maxResults)
+			.map((d, i) => (
+				<div
+					ref={i === this.state.selected ? this.selectedRef : null}
+					className={[
+						'row',
+						i === this.state.selected ? 'selected' : '',
+					]
+						.filter(Boolean)
+						.join(' ')}
+					key={d[0]}
+					onMouseDown={(e) => this.onClickRow(e, d[0], i)}>
+					<div className="code">{d[0]}</div>
+					<div className="description">{d[1]}</div>
+				</div>
+			))
 
 		return (
 			<div className="autocomplete">
@@ -133,10 +139,10 @@ class Autocomplete extends React.Component {
 					type="text"
 					value={this.props.value}
 					placeholder={this.props.placeholder}
-					onKeyDown={e => this.onKeyDown(e)}
-					onChange={e => this.onChange(e)}
-					onFocus={e => this.onFocus(e)}
-					onBlur={e => this.onBlur(e)}
+					onKeyDown={(e) => this.onKeyDown(e)}
+					onChange={(e) => this.onChange(e)}
+					onFocus={(e) => this.onFocus(e)}
+					onBlur={(e) => this.onBlur(e)}
 				/>
 				{results.length > 0 && (
 					<div className="results" ref={this.resultsRef}>

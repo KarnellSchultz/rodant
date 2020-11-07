@@ -25,14 +25,12 @@ export default function SortContainer({
 			<Pager
 				page={page}
 				max={pageCount}
-				onPageChange={(e) => onPageChange(e)}
-			></Pager>
+				onPageChange={(e) => onPageChange(e)}></Pager>
 			<div className="select is-primary sortField">
 				<select
 					className="select"
 					value={sortField}
-					onChange={(e) => onSortFieldChanged(e)}
-				>
+					onChange={(e) => onSortFieldChanged(e)}>
 					{codebook.map((d) => (
 						<option value={d.name} key={d.name}>
 							{d.label}

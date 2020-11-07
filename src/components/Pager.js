@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 
 function Pager(props) {
 	const clampValue = (value) =>
-		typeof value === 'string' ? value : Math.max(1, Math.min(value, props.max))
+		typeof value === 'string'
+			? value
+			: Math.max(1, Math.min(value, props.max))
 
 	let [page, setPage] = useState(props.page + 1)
 	page = clampValue(page)
@@ -24,8 +26,7 @@ function Pager(props) {
 			<button
 				className="button is-primary is-small"
 				disabled={page === 1}
-				onClick={(e) => updatePage(page - 1)}
-			>
+				onClick={(e) => updatePage(page - 1)}>
 				&lt;
 			</button>
 			<input
@@ -34,15 +35,13 @@ function Pager(props) {
 				type="text"
 				onChange={(e) => pageTextChanged(e)}
 				onFocus={(e) => e.target.setSelectionRange(0, 999)}
-				onBlur={() => setPage(props.page + 1)}
-			></input>
+				onBlur={() => setPage(props.page + 1)}></input>
 			<span>/</span>
 			<span>{props.max}</span>
 			<button
 				className="button is-primary is-small"
 				disabled={page === props.max}
-				onClick={() => updatePage(page + 1)}
-			>
+				onClick={() => updatePage(page + 1)}>
 				&gt;
 			</button>
 		</div>

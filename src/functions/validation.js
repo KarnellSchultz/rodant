@@ -43,12 +43,13 @@ function validateQuantitative(value, field) {
 	)
 		return []
 
-	if (value.toString() === 'NaN') return ['This field can not be empty']
+	if (value.toString() === 'NaN')
+		return ['This field can not be empty']
 
 	let v = parseInt(value)
 	if (v.toString() === 'NaN') return [`Not a number`]
 
-	let range = field.valid_values.split(',').map(d => parseFloat(d))
+	let range = field.valid_values.split(',').map((d) => parseFloat(d))
 
 	return v >= range[0] && v <= range[1]
 		? []
@@ -62,11 +63,14 @@ function validateQuantitative(value, field) {
 function validateQualitative(value, field) {
 	if (!field.valid_values) return []
 
-	if (field.unknown !== '' && value.toString() === field.unknown) return []
+	if (field.unknown !== '' && value.toString() === field.unknown)
+		return []
 
-	if (value.toString() === 'NaN') return ['This field can not be empty']
+	if (value.toString() === 'NaN')
+		return ['This field can not be empty']
 
-	return field.valid_values.split(',').indexOf(value.toString()) !== -1
+	return field.valid_values.split(',').indexOf(value.toString()) !==
+		-1
 		? []
 		: [`'${value}' is not a valid value`]
 }
@@ -90,7 +94,9 @@ function validateDate(value, field) {
 		return [`'${value}' is not in correct format YYYY-MM-DD`]
 
 	// Validate date with moment
-	return moment(value).isValid() ? [] : [`'${value}' is not in a valid date`]
+	return moment(value).isValid()
+		? []
+		: [`'${value}' is not in a valid date`]
 }
 
 /**
@@ -236,13 +242,13 @@ function validateRecord(record, fields) {
 			let logicPrompts = JSON.parse('[' + field.logic_prompts + ']')
 			let mustBeTrue = field.logic_must_be_true
 				.split(',')
-				.map(d => d.trim() === 'yes')
+				.map((d) => d.trim() === 'yes')
 
 			for (let i in checks) {
 				if (typeof checks[i] === 'string')
 					logicErrors.push(
 						`'${
-							(fields.find(d => d.name === checks[i]) || {}).label
+							(fields.find((d) => d.name === checks[i]) || {}).label
 						}' can not be empty`
 					)
 				else if (checks[i] && mustBeTrue[i] === true)
@@ -258,48 +264,52 @@ function validateRecord(record, fields) {
 		let hasUnknownDependency = false
 
 		if (field.logic_checks !== '')
-			hasUnknownDependency = checkUnknownDependencies(
-				field,
-				context
-			)
+			hasUnknownDependency = checkUnknownDependencies(field, context)
 
 		if (field.calculated === 'yes' && !hasUnknownDependency)
-			hasUnknownDependency = checkUnknownDependencies(
-				field,
-				context
-			)
+			hasUnknownDependency = checkUnknownDependencies(field, context)
 
 		let ignoreValidation = false
 		if (field.valid_values !== '')
-			ignoreValidation = field.valid_values.split(',').includes(context[field.name])
-	
-	 	// Check if date and time fields include other valid value
+			ignoreValidation = field.valid_values
+				.split(',')
+				.includes(context[field.name])
+
+		// Check if date and time fields include other valid value
 		let hasOtherValidDependency = false
-		if (field.logic_checks !== '' && (field.type === "date" || field.type === "time"  || field.type === "datetime"))
+		if (
+			field.logic_checks !== '' &&
+			(field.type === 'date' ||
+				field.type === 'time' ||
+				field.type === 'datetime')
+		)
 			hasOtherValidDependency |= checkOtherValidDependency(
 				field,
 				'logic_checks',
 				context,
 				fieldsByName
 			)
-			
+
 		// Remove duplicate errors
 		logicErrors = [...new Set(logicErrors)]
 
 		// Define valid
-		let valid = hasUnknownDependency || hasOtherValidDependency || ignoreValidation || logicErrors.length === 0
+		let valid =
+			hasUnknownDependency ||
+			hasOtherValidDependency ||
+			ignoreValidation ||
+			logicErrors.length === 0
 
-		// Clear logic errors if valid    
-		if (valid) logicErrors = []    
-				
+		// Clear logic errors if valid
+		if (valid) logicErrors = []
+
 		result[field.name] = {
 			value: context[field.name],
 			valid: valid,
 			errors: logicErrors,
 			warnings: logicWarnings,
 			unknown:
-				hasUnknownDependency || 
-				isUnknown(context[field.name], field),
+				hasUnknownDependency || isUnknown(context[field.name], field),
 			incomplete: !context[field.name] && context[field.name] !== 0,
 			type: field.type,
 		}
@@ -317,18 +327,24 @@ function thisVars(text) {
 /**
  * Checks if a field has dependency vars that are valid but not dates or times
  */
-function checkOtherValidDependency(field, member, context, fieldsByName) {
-		var text = field[member]
-		if (text === null) return false
+function checkOtherValidDependency(
+	field,
+	member,
+	context,
+	fieldsByName
+) {
+	var text = field[member]
+	if (text === null) return false
 
-		return text
-			.trim()
-			.match(findVarRegex)
-			.filter(d => fieldsByName[d].valid_values !== '')
-			.map(d => fieldsByName[d].valid_values.split(',').includes(context[d]))
-			.some(d => d === true)
+	return text
+		.trim()
+		.match(findVarRegex)
+		.filter((d) => fieldsByName[d].valid_values !== '')
+		.map((d) =>
+			fieldsByName[d].valid_values.split(',').includes(context[d])
+		)
+		.some((d) => d === true)
 }
-
 
 /**
  * Checks if a field has any unknown dependency vars
@@ -336,8 +352,8 @@ function checkOtherValidDependency(field, member, context, fieldsByName) {
  */
 function checkUnknownDependencies(field, context) {
 	return field.dependencies // For all dependency fields...
-		.map(d => isUnknown(context[d.name], d)) // ... check if value in context is unknown
-		.some(d => d === true) // If any are unknown, return true
+		.map((d) => isUnknown(context[d.name], d)) // ... check if value in context is unknown
+		.some((d) => d === true) // If any are unknown, return true
 }
 
 /**
@@ -347,7 +363,7 @@ function checkUnknownDependencies(field, context) {
  * signaling that a dependent value were undefined (an error).
  */
 function checkLogic(field, context) {
-	return field.logic_checks.split(',').map(c => {
+	return field.logic_checks.split(',').map((c) => {
 		// If any of the dependent values are _undefined_ test failure
 		// If any of the dependent values are _unknown_ test succeeds
 		let vars = c.trim().match(findVarRegex)
@@ -356,11 +372,15 @@ function checkLogic(field, context) {
 		for (let v of vars)
 			if (context[v] === undefined || context[v] === '') return v
 			// Dependent value is _undefined_ so return the undefined field id for error message
-			else if (context[v].toString() === (field.unknown || 999).toString())
+			else if (
+				context[v].toString() === (field.unknown || 999).toString()
+			)
 				return false // Dependent value is _unknown_ pass test
 
 		// Run the test
-		let func = new Function('return ' + thisVars(c.trim())).bind(context)()
+		let func = new Function('return ' + thisVars(c.trim())).bind(
+			context
+		)()
 		return func
 	})
 }
@@ -370,18 +390,16 @@ function checkLogic(field, context) {
  * @param validationResult
  */
 function isValid(validationResult) {
-	return Object.keys(validationResult).every(d => validationResult[d].valid)
+	return Object.keys(validationResult).every(
+		(d) => validationResult[d].valid
+	)
 }
 
 /** Returns true if the value is the same as field.unknown given that field.unknown is not empty */
 function isUnknown(value, field) {
-	if (
-		!field.unknown ||
-		value === undefined ||
-		value === null
-	) 
+	if (!field.unknown || value === undefined || value === null)
 		return false
-	
+
 	if (value.toString() === field.unknown) return true
 
 	return false

@@ -16,13 +16,17 @@ export default function useDarkMode() {
 	useEffect(() => {
 		// manually setting the button classes that are controlled by the css framework
 		if (theme === 'dark' && componentMounted) {
-			document.querySelector('body').setAttribute('class', 'dark-theme')
+			document
+				.querySelector('body')
+				.setAttribute('class', 'dark-theme')
 			document.querySelectorAll('button').forEach((element) => {
 				element.className.includes('button ') &&
 					element.setAttribute('class', 'button  is-dark')
 			})
 		} else {
-			document.querySelector('body').setAttribute('class', 'light-theme')
+			document
+				.querySelector('body')
+				.setAttribute('class', 'light-theme')
 			document.querySelectorAll('button').forEach((element) => {
 				element.className.includes('button ') &&
 					element.setAttribute('class', 'button ')

@@ -18,7 +18,9 @@ export default function SearchRecords({
 				onChange={(e) => changeSearchText(e)}
 			/>
 			<div className="select is-primary search-field">
-				<select value={searchField} onChange={(e) => onSearchFieldChanged(e)}>
+				<select
+					value={searchField}
+					onChange={(e) => onSearchFieldChanged(e)}>
 					<option default value="" key="default">
 						All fields
 					</option>

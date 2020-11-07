@@ -1,6 +1,5 @@
 import React from 'react'
-import {useModalState, useModalDispatch} from '.'
-
+import { useModalState, useModalDispatch } from '.'
 
 /**
  * `Modal` makes use of the ModalProvider context.
@@ -13,32 +12,33 @@ import {useModalState, useModalDispatch} from '.'
  */
 
 export const Modal = () => {
-    const modalState = useModalState()
-    const dispatch =  useModalDispatch()
+	const modalState = useModalState()
+	const dispatch = useModalDispatch()
 
-
-    return (
-        <>
-        <div className={modalState.show ? `modal is-active is-clipped` : `modal`}>
-            <div
-            className="modal-background">
-            </div>
-            <div className="modal-content">
-        <article className="message">
-                <div className="message-header">
-                    <p>{modalState.header}</p>
-                <button onClick={()=>dispatch({type:'HIDE' })}
-                className="delete" aria-label="delete"></button>
-                </div>
-            <div className="message-body">
-                {modalState.content}
-            </div>
-        </article>
-            </div>
-            <button
-            onClick={()=>dispatch({type: 'HIDE' })}
-            className="modal-close is-large" aria-label="close"></button>
-        </div>
-        </>
-    )
+	return (
+		<>
+			<div
+				className={
+					modalState.show ? `modal is-active is-clipped` : `modal`
+				}>
+				<div className="modal-background"></div>
+				<div className="modal-content">
+					<article className="message">
+						<div className="message-header">
+							<p>{modalState.header}</p>
+							<button
+								onClick={() => dispatch({ type: 'HIDE' })}
+								className="delete"
+								aria-label="delete"></button>
+						</div>
+						<div className="message-body">{modalState.content}</div>
+					</article>
+				</div>
+				<button
+					onClick={() => dispatch({ type: 'HIDE' })}
+					className="modal-close is-large"
+					aria-label="close"></button>
+			</div>
+		</>
+	)
 }

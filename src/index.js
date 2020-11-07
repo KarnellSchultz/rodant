@@ -12,11 +12,15 @@ serviceWorker.register()
 const DB_VERSION = 1
 async function bootstrap() {
 	// Load config
-	let configRequest = await fetch(`${process.env.PUBLIC_URL}/config.json`)
+	let configRequest = await fetch(
+		`${process.env.PUBLIC_URL}/config.json`
+	)
 	let config = await configRequest.json()
 
 	// Parse codebook into javascript object
-	let response = await fetch(`${process.env.PUBLIC_URL}/${config.codebook}`)
+	let response = await fetch(
+		`${process.env.PUBLIC_URL}/${config.codebook}`
+	)
 	let codebook = await response.text()
 	let csvString = await csv.parse(codebook)
 	let items = csvToCodebook(csvString)

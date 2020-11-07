@@ -17,7 +17,6 @@ import SortContainer from './SortContainer'
 import useLocalStorage from './Hooks/useLocalStorage'
 import { Modal, useModalDispatch } from './modal'
 
-
 /**
  * Renders a list of the available records.
  * Clicking a record will take you to the corresponding RecordEditor page.
@@ -46,10 +45,20 @@ function RecordPicker(props) {
 	let reducer = (sortState, action) => {
 		switch (action.type) {
 			case 'LOCALSTORAGE_STATE_UPDATE':
-				setLocalStorageValue({ ...sortState, [action.field]: action.payload })
-				return { ...sortState, [action.field]: action.payload, page: 0 }
+				setLocalStorageValue({
+					...sortState,
+					[action.field]: action.payload,
+				})
+				return {
+					...sortState,
+					[action.field]: action.payload,
+					page: 0,
+				}
 			case 'PAGE_UPDATE':
-				return setLocalStorageValue({ ...sortState, page: action.payload })
+				return setLocalStorageValue({
+					...sortState,
+					page: action.payload,
+				})
 			default:
 				throw new Error(
 					`Reducer Error when attempting to use this action: ${action.type},
@@ -205,12 +214,20 @@ function RecordPicker(props) {
 		}
 
 		if (toDelete.length === 0 && silent) {
-			modalDispatch({type: 'SHOW', payload: {header:'No Records Deleted', content: 'No invalid records to delete.'}})
+			modalDispatch({
+				type: 'SHOW',
+				payload: {
+					header: 'No Records Deleted',
+					content: 'No invalid records to delete.',
+				},
+			})
 		} else {
 			// Found invalid records, if not in silent mode ask to delete them
 			if (
 				silent ||
-				window.confirm('Really delete ' + toDelete.length + ' records?')
+				window.confirm(
+					'Really delete ' + toDelete.length + ' records?'
+				)
 			) {
 				// Delete from db
 				await props.db.records
@@ -229,7 +246,9 @@ function RecordPicker(props) {
 	let searchHits = {}
 	let sortField = ''
 	state.sortField
-		? (sortField = props.codebook.find((d) => d.name === state.sortField))
+		? (sortField = props.codebook.find(
+				(d) => d.name === state.sortField
+		  ))
 		: (sortField = 'pid')
 
 	useEffect(() => {
@@ -242,7 +261,8 @@ function RecordPicker(props) {
 			// Filter on search term
 			.filter((d) => {
 				// If not checked, do not include records that are marked as locked
-				if (!sortState.includeLocked && d.locked !== 'FALSE') return false
+				if (!sortState.includeLocked && d.locked !== 'FALSE')
+					return false
 
 				// If not checked, do not include records with sortField unknown
 				if (!sortState.includeUnknown) {
@@ -258,12 +278,16 @@ function RecordPicker(props) {
 				let interpolatedRaw = interpolateRecord(d, props.codebook)
 				let interpolated = {}
 				for (let f of props.codebook)
-					interpolated[f.name] = (interpolatedRaw[f.name] || '').toString()
+					interpolated[f.name] = (
+						interpolatedRaw[f.name] || ''
+					).toString()
 
 				const keys = props.codebook
 					.map((d) => d.name)
 					// If there is a searchField selected, use only keys matching it
-					.filter((d) => state.searchField === '' || d === state.searchField)
+					.filter(
+						(d) => state.searchField === '' || d === state.searchField
+					)
 				let hit = false
 				let hits = []
 
@@ -272,7 +296,8 @@ function RecordPicker(props) {
 						interpolated.hasOwnProperty(k) &&
 						interpolated[k] != null &&
 						(sortState.exactMatch
-							? interpolated[k].toString().toLowerCase() === state.search.trim()
+							? interpolated[k].toString().toLowerCase() ===
+							  state.search.trim()
 							: interpolated[k]
 									.toString()
 									.toLowerCase()
@@ -306,7 +331,8 @@ function RecordPicker(props) {
 					// Handle other values as strings
 					if (a[sortState.sortField] > b[sortState.sortField])
 						return -sortState.sortOrder
-					else if (a[sortState.sortField] === b[sortState.sortField]) return 0
+					else if (a[sortState.sortField] === b[sortState.sortField])
+						return 0
 					return sortState.sortOrder
 				}
 			})
