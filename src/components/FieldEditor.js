@@ -27,7 +27,7 @@ class FieldEditor extends React.Component {
 		}
 	}
 
-	componentDidUpdate(prevProps) {
+	componentDidUpdate() {
 		// Update
 		let desiredValue = (
 			this.props.record[this.props.data.name] || ''
@@ -65,7 +65,7 @@ class FieldEditor extends React.Component {
 		})
 	}
 
-	toggleDescriptions(e) {
+	toggleDescriptions() {
 		this.setState({
 			showDescriptions: !this.state.showDescriptions,
 		})
@@ -132,10 +132,10 @@ class FieldEditor extends React.Component {
 									id={`field_${d.name}`}
 									type="radio"
 									disabled={this.props.disabled}
-									onFocus={(e) => this.onFocus()}
-									onBlur={(e) => this.onBlur()}
+									onFocus={() => this.onFocus()}
+									onBlur={() => this.onBlur()}
 									checked={this.state.value === values[i].toString()}
-									onChange={(e) =>
+									onChange={() =>
 										this.changeValueRadio(values[i].toString())
 									}
 								/>
@@ -154,8 +154,8 @@ class FieldEditor extends React.Component {
 							value={this.state.value}
 							disabled={this.props.disabled || d.input !== 'yes'}
 							onChange={(e) => this.changeValueSelect(e)}
-							onFocus={(e) => this.onFocus()}
-							onBlur={(e) => this.onBlur()}>
+							onFocus={() => this.onFocus()}
+							onBlur={() => this.onBlur()}>
 							<option key="unset"></option>
 							{values.map((d, i) => (
 								<option key={d} value={d}>
@@ -177,8 +177,8 @@ class FieldEditor extends React.Component {
 					placeholder={unlabeled ? d.label : ''}
 					value={this.state.value}
 					onChange={(e) => this.changeValueText(e)}
-					onFocus={(e) => this.onFocus()}
-					onBlur={(e) => this.onBlur()}
+					onFocus={() => this.onFocus()}
+					onBlur={() => this.onBlur()}
 				/>
 			)
 		} else if (d.type === 'icd10') {
@@ -199,13 +199,14 @@ class FieldEditor extends React.Component {
 							this.changeValueText(e)
 						}
 					}}
-					onFocus={(e) => this.onFocus()}
-					onBlur={(e) => this.onBlur()}
+					onFocus={() => this.onFocus()}
+					onBlur={() => this.onBlur()}
 				/>
 			)
 		} else {
 			// Qualitative
 			if (d.name.substr(-3) === 'icd') {
+				console.log('icd');
 			} else {
 				// Render text
 				input = (
@@ -217,8 +218,8 @@ class FieldEditor extends React.Component {
 						placeholder={unlabeled ? d.label : ''}
 						value={this.state.value}
 						onChange={(e) => this.changeValueText(e)}
-						onFocus={(e) => this.onFocus()}
-						onBlur={(e) => this.onBlur()}
+						onFocus={() => this.onFocus()}
+						onBlur={() => this.onBlur()}
 					/>
 				)
 			}
@@ -236,7 +237,7 @@ class FieldEditor extends React.Component {
 		return (
 			<div
 				className={'record_field ' + this.getFieldClass()}
-				onClick={(e) => console.log(d)}>
+				onClick={() => console.log(d)}>
 				{label}
 				<div className="field has-addons">
 					<div className="control">{input}</div>

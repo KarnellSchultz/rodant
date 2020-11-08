@@ -229,7 +229,7 @@ function validateRecord(record, fields) {
 	let context = interpolateRecord(record, fields)
 	let fieldsByName = Object.assign(
 		{},
-		...[...fields.entries()].map(([k, v]) => ({ [v.name]: v }))
+		...[...fields.values()].map((v) => ({ [v.name]: v }))
 	)
 
 	// Apply calculated context to result and do logic checks

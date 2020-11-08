@@ -74,7 +74,7 @@ export default function RecordsContainer({
 										<span key={i}>
 											{e[0]}: {e[1]}
 										</span>
-								  ))
+))
 								: null}
 						</span>
 						<span className="sort-field">

@@ -26,7 +26,7 @@ function Pager(props) {
 			<button
 				className="button is-primary is-small"
 				disabled={page === 1}
-				onClick={(e) => updatePage(page - 1)}>
+				onClick={() => updatePage(page - 1)}>
 				&lt;
 			</button>
 			<input

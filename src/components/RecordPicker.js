@@ -191,7 +191,6 @@ function RecordPicker(props) {
 	}
 
 	function onPageChange(page) {
-		debugger
 		setState({ ...state, page: parseInt(page) })
 		// dispatch({
 		// 	type: 'PAGE_UPDATE',
@@ -248,7 +247,7 @@ function RecordPicker(props) {
 	state.sortField
 		? (sortField = props.codebook.find(
 				(d) => d.name === state.sortField
-		  ))
+))
 		: (sortField = 'pid')
 
 	useEffect(() => {
@@ -297,7 +296,7 @@ function RecordPicker(props) {
 						interpolated[k] != null &&
 						(sortState.exactMatch
 							? interpolated[k].toString().toLowerCase() ===
-							  state.search.trim()
+							state.search.trim()
 							: interpolated[k]
 									.toString()
 									.toLowerCase()

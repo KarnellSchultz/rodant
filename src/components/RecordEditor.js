@@ -109,7 +109,7 @@ class RecordEditor extends React.Component {
 		})
 	}
 
-	onBlurFieldEditor(fe) {
+	onBlurFieldEditor() {
 		this.setState({
 			state: this.state.state,
 			record: this.state.record,
@@ -252,7 +252,7 @@ class RecordEditor extends React.Component {
 		} else if (this.state.state === RecordEditorState.NOTFOUND) {
 			return (
 				<div className="content">
-					Couldn't find record with id: {this.props.uid}
+					{`Couldn't find record with id: ${this.props.uid}`}
 				</div>
 			)
 		} else if (this.state.state === RecordEditorState.NONE) {
@@ -309,7 +309,7 @@ class RecordEditor extends React.Component {
 			!this.state.disableExitShield &&
 			(!valid || (this.state.doubleEntry && locked)) ? (
 				<Prompt
-					message={(nextLocation) => {
+					message={() => {
 						if (this.state.doubleEntry) {
 							return 'You have not yet completed this Double Entry. Discard changes?'
 						}
@@ -558,7 +558,7 @@ class RecordEditor extends React.Component {
 		)
 	}
 
-	changeRadios(e) {
+	changeRadios() {
 		this.setState({
 			allowRadios: !this.state.allowRadios,
 		})
