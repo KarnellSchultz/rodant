@@ -5,7 +5,11 @@ module.exports = {
 		browser: true,
 		es6: true,
 	},
-	extends: ['plugin:react/recommended', 'eslint:recommended'],
+	extends: [
+		'plugin:react/recommended',
+		'eslint:recommended',
+		'prettier',
+	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
 		ecmaFeatures: {
