@@ -12,11 +12,12 @@ import {
 } from '../functions/validation'
 
 import { ButtonContainer } from '../components/ButtonContainer'
-import {SearchRecords} from '../components/SearchRecords'
-import {RecordsContainer} from '../components/RecordsContainer'
-import {SortContainer} from '../components/SortContainer'
-import {useLocalStorage} from '../components/hooks/useLocalStorage'
+import { SearchRecords } from '../components/SearchRecords'
+import { RecordsContainer } from '../components/RecordsContainer'
+import { SortContainer } from '../components/SortContainer'
+import { useLocalStorage } from '../components/hooks/useLocalStorage'
 import { Modal, useModalDispatch } from '../components/modal'
+import {useDatabaseContext, useDatabaseDispatch, useRecordsContext} from '../globalState/reducers'
 
 /**
  * Renders a list of the available records.
@@ -65,6 +66,11 @@ function RecordPicker(props) {
 	const [filteredRecordsState, setFilteredRecordsState] = useState([])
 	const [searchResults, setSearchResults] = useState({})
 
+	const databaseDisptch = useDatabaseDispatch()
+	const DatabaseContext = useDatabaseContext()
+	const [recordsContext, setRecordsContext] = useRecordsContext()
+	console.log(recordsContext);
+
 	useEffect(() => {
 		updateRecords()
 		getCodeBookValue()
@@ -83,17 +89,20 @@ function RecordPicker(props) {
 	}
 
 	async function updateRecords() {
-		let records = await props.db.records.toArray()
+		let records = await DatabaseContext.records.toArray()
 		setState({ ...state, records: records })
+		setRecordsContext({ ...state, records: records })
 	}
 
 	async function createRecord() {
-		let recordId = await props.db.records.add({
-			name: 'Unnamed',
-			locked: 'FALSE',
-		})
+		// let recordId = await props.db.records.add({
+		// 	name: 'Unnamed',
+		// 	locked: 'FALSE',
+		// })
 
-		props.history.push('/record/' + recordId)
+		databaseDisptch({type: 'create'})
+
+		// props.history.push('/record/' + recordId)
 		updateRecords()
 	}
 
